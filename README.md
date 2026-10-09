@@ -6,7 +6,8 @@ A C++20 / Vulkan real-time ray tracing sandbox for implementing techniques from
 *Ray Tracing Gems* I & II, with an ECS, Jolt physics, and a Garry's Mod-style
 sandbox to spawn and interact with objects.
 
-> **Status:** building milestone M0a (renderer core). `run.bat` already builds and starts the engine shell.
+> **Status:** building milestone M0a (renderer core). `run.bat` builds and starts the engine: Sponza in a raster
+> G-buffer with placeholder lighting, and a naive reference path tracer on **F5**.
 > The specification lives in [`Design_Vault/`](Design_Vault/) (open the repo folder as an Obsidian vault).
 
 ## Requirements (install once per machine)
@@ -39,7 +40,18 @@ Later runs only rebuild what changed and start in seconds.
 | `run.bat release` | Build Release and launch |
 | `run.bat test` | Build and run the smoke test |
 | `run.bat clean` | Delete build output and rebuild |
+| `run.bat --scene Scenes/CornellBox.scene.json` | Anything after the mode is passed to the engine (`--scene`, `--frames`, `--no-validation`) |
 | `new_technique.bat <Category> <Name>` | Create a new technique from the template |
+
+## Controls
+
+| Input | Action |
+|---|---|
+| Hold **right mouse** + move | Look around |
+| **W A S D**, **Space** / **C** | Fly; up / down |
+| **Shift** / **Ctrl** | Faster / slower; **mouse wheel** sets the base speed |
+| **F5** | Raster ↔ reference path tracer (accumulates while the camera stands still) |
+| **F11** / **F12** | Fullscreen / screenshot to `Captures/` |
 
 ## Repository layout
 

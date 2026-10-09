@@ -1,5 +1,9 @@
 # GHOST LIGHT driver behind run.bat: check requirements, bootstrap tools, configure, build, fetch assets, then launch or test.
-param([Parameter(Position = 0)][string]$Mode = '')
+# Anything after the mode goes to GhostLight.exe: run.bat --scene Scenes/CornellBox.scene.json, run.bat release --frames 100
+param(
+    [Parameter(Position = 0)][string]$Mode = '',
+    [Parameter(Position = 1, ValueFromRemainingArguments = $true)][string[]]$EngineArgs = @()
+)
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -30,9 +34,14 @@ function Test-GpuRequirements {
     }
 }
 
+# No mode but engine options (run.bat --scene X) means a Debug build + launch with those options.
+if ($Mode.StartsWith('-')) {
+    $EngineArgs = @($Mode) + $EngineArgs
+    $Mode = ''
+}
 $key = $Mode.ToLowerInvariant()
 if (-not $Modes.ContainsKey($key)) {
-    Write-Host "Unknown option '$Mode'. Usage: run.bat [release | test | clean]"
+    Write-Host "Unknown option '$Mode'. Usage: run.bat [release | test | clean] [engine options, e.g. --scene Scenes/CornellBox.scene.json]"
     exit 2
 }
 $selected = $Modes[$key]
@@ -85,8 +94,8 @@ try {
         'Engine' {
             Write-Step 6 $StepCount 'Launching'
             $exe = Join-Path $configDir 'GhostLight.exe'
-            Write-Info "  Build\$($selected.Config)\GhostLight.exe"
-            & $exe
+            Write-Info "  Build\$($selected.Config)\GhostLight.exe $($EngineArgs -join ' ')"
+            & $exe @EngineArgs
             $exitCode = $LASTEXITCODE
             if ($exitCode -ne 0) { Stop-Ghost "GhostLight.exe exited with code $exitCode. Its log is Build\GhostLight.log." }
         }

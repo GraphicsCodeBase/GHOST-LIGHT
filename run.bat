@@ -1,5 +1,5 @@
 @echo off
-rem GHOST LIGHT one-click entry point: builds and runs the engine. Usage: run.bat [release ^| test ^| clean]
+rem GHOST LIGHT one-click entry point: builds and runs the engine. Usage: run.bat [release ^| test ^| clean] [engine options, e.g. --scene Scenes/CornellBox.scene.json]
 setlocal
 "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Scripts\Run.ps1" %*
 set "GHOST_EXIT=%ERRORLEVEL%"
