@@ -11,7 +11,7 @@ tags: [spec, tech]
 | Graphics API | **Vulkan 1.3** + KHR ray tracing | Cross-vendor, explicit, valued on resumes (RTG2 ch.16) |
 | Shading language | **Slang** → SPIR-V | Modern, good RT support, HLSL-like like most RTG listings |
 | Compiler / build | **MSVC + CMake + Ninja**, all from the **VS 2022 C++ workload** | Only one prerequisite to install, see [[15 Setup and Portability]] |
-| Dependencies | CMake `FetchContent`, **pinned versions** | Automatic, reproducible |
+| Dependencies | `Scripts/Dependencies.json` manifest, downloaded by `run.bat` into `.tools/`, **pinned versions + SHA-256** | Automatic, reproducible, offline after the first run |
 | Platform | Windows 10/11 x64, **NVIDIA RTX** GPU | Matches requirements |
 
 ## Libraries (all fetched automatically)

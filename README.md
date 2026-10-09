@@ -6,15 +6,15 @@ A C++20 / Vulkan real-time ray tracing sandbox for implementing techniques from
 *Ray Tracing Gems* I & II, with an ECS, Jolt physics, and a Garry's Mod-style
 sandbox to spawn and interact with objects.
 
-> **Status:** design phase. The specification lives in [`Design_Vault/`](Design_Vault/)
-> (open it as an Obsidian vault). The engine is not built yet.
+> **Status:** building milestone M0a (renderer core). `run.bat` already builds and starts the engine shell.
+> The specification lives in [`Design_Vault/`](Design_Vault/) (open the repo folder as an Obsidian vault).
 
 ## Requirements (install once per machine)
 
 | Requirement | Notes |
 |---|---|
 | Windows 10/11 x64 | |
-| **Visual Studio 2022 or newer** (Community is fine) or the matching **Build Tools** with the **"Desktop development with C++"** workload | Provides the compiler, CMake, and Ninja |
+| **Visual Studio 2022 (17.5 or later) or newer** (Community is fine) or the matching **Build Tools** with the **"Desktop development with C++"** workload | Provides the compiler, CMake, and Ninja |
 | **Git** | To clone the repository |
 | **NVIDIA RTX GPU** (RTX 20-series or newer) with a recent driver | Hardware ray tracing via Vulkan |
 | Internet connection on first run | Dependencies and assets are downloaded once; works offline afterwards |

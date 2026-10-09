@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "comment": "Pinned third-party code and tools that run.bat downloads. dest is relative to the repo root. sha256 empty = not pinned yet (run.bat test refuses that).",
+  "dependencies": [
+    {
+      "name": "slang",
+      "kind": "tool",
+      "version": "2026.18.3",
+      "url": "https://github.com/shader-slang/slang/releases/download/v2026.18.3/slang-2026.18.3-windows-x86_64.zip",
+      "sha256": "1339d7b3050ae680c11152b8ccff977173591ce8e9c1d2a5cff2eb904d52e50d",
+      "sizeBytes": 63210212,
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "stripTopLevel": false,
+      "dest": ".tools/slang"
+    },
+    {
+      "name": "vulkan-headers",
+      "kind": "source",
+      "version": "vulkan-sdk-1.4.357.0",
+      "url": "https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/vulkan-sdk-1.4.357.0.zip",
+      "sha256": "bc7925a17854a9bac9433309e8df88a701ef1d49d2020fff6db9407b637ea840",
+      "sizeBytes": 3412609,
+      "license": "Apache-2.0 OR MIT",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/vulkan-headers"
+    },
+    {
+      "name": "volk",
+      "kind": "source",
+      "version": "vulkan-sdk-1.4.357.0",
+      "url": "https://github.com/zeux/volk/archive/refs/tags/vulkan-sdk-1.4.357.0.zip",
+      "sha256": "35a315405eb3817959f478c0c3860034b36b0a4c7a2fa4a41f98a8396aedf603",
+      "sizeBytes": 95848,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/volk"
+    },
+    {
+      "name": "vk-bootstrap",
+      "kind": "source",
+      "version": "v1.4.357",
+      "url": "https://github.com/charles-lunarg/vk-bootstrap/archive/refs/tags/v1.4.357.zip",
+      "sha256": "04e4db30ab156ee7ef5d24f0b76d92c1b51acfafaa786f01dbcea78eda91d73f",
+      "sizeBytes": 232090,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/vk-bootstrap"
+    },
+    {
+      "name": "vma",
+      "kind": "source",
+      "version": "v3.4.0",
+      "url": "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/archive/refs/tags/v3.4.0.zip",
+      "sha256": "ce9a61ea5e72284ac9ccc152c214eef381ab57bfd7383f20232e5a652e3afda6",
+      "sizeBytes": 1232483,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/vma"
+    },
+    {
+      "name": "glfw",
+      "kind": "source",
+      "version": "3.4",
+      "url": "https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.zip",
+      "sha256": "b5ec004b2712fd08e8861dc271428f048775200a2df719ccf575143ba749a3e9",
+      "sizeBytes": 1653725,
+      "license": "Zlib",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/glfw"
+    },
+    {
+      "name": "glm",
+      "kind": "source",
+      "version": "1.0.1",
+      "url": "https://github.com/g-truc/glm/releases/download/1.0.1/glm-1.0.1-light.zip",
+      "sha256": "9a995de4da09723bd33ef194e6b79818950e5a8f2e154792f02e4615277cfb8d",
+      "sizeBytes": 427680,
+      "license": "MIT",
+      "stripTopLevel": false,
+      "dest": ".tools/deps/glm"
+    },
+    {
+      "name": "nlohmann-json",
+      "kind": "source",
+      "version": "v3.12.0",
+      "url": "https://github.com/nlohmann/json/releases/download/v3.12.0/include.zip",
+      "sha256": "b8cb0ef2dd7f57f18933997c9934bb1fa962594f701cd5a8d3c2c80541559372",
+      "sizeBytes": 309160,
+      "license": "MIT",
+      "stripTopLevel": false,
+      "dest": ".tools/deps/nlohmann-json"
+    },
+    {
+      "name": "entt",
+      "kind": "source",
+      "version": "v3.16.0",
+      "url": "https://github.com/skypjack/entt/archive/refs/tags/v3.16.0.zip",
+      "sha256": "b34b11f00ea9abbdda63c4cfdcee319047882376abf3c3ef95436ed138293bd1",
+      "sizeBytes": 1041857,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/entt"
+    },
+    {
+      "name": "imgui",
+      "kind": "source",
+      "version": "v1.92.8-docking",
+      "url": "https://github.com/ocornut/imgui/archive/refs/tags/v1.92.8-docking.zip",
+      "sha256": "cb613f0dd1de5f8d9b199142f3122c122e44226c7e4edba758e011e79fafba62",
+      "sizeBytes": 2437748,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/imgui"
+    },
+    {
+      "name": "cgltf",
+      "kind": "source",
+      "version": "v1.15",
+      "url": "https://github.com/jkuhlmann/cgltf/archive/refs/tags/v1.15.zip",
+      "sha256": "a2f5f6db978fd269a107e9284f4a7bac5d1132cd7cc5e6464e60c8aff81001d1",
+      "sizeBytes": 52799,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": ".tools/deps/cgltf"
+    },
+    {
+      "name": "stb-image",
+      "kind": "source",
+      "version": "2c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "url": "https://raw.githubusercontent.com/nothings/stb/2c980bb59875b0d32144a71867fbdebb2f77cd20/stb_image.h",
+      "sha256": "594c2fe35d49488b4382dbfaec8f98366defca819d916ac95becf3e75f4200b3",
+      "sizeBytes": 283010,
+      "license": "MIT OR Unlicense",
+      "stripTopLevel": false,
+      "dest": ".tools/deps/stb"
+    }
+  ]
+}

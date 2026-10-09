@@ -51,5 +51,8 @@ tags: [decisions]
 | 2026-10-10 | Deferred from M0a: BC7 compression (Sponza fits as RGBA8), Tracy, emissive triangle list (M4) | Not needed yet |
 | 2026-10-10 | Naive reference path tracer = cosine diffuse, epsilon offset, hard-shadow sun ray, mip 0 textures, no MIS / Russian roulette, each marked `RTG-TODO` | Correct but naive baseline the user upgrades in M2 |
 | 2026-10-10 | Engine example technique lives in `Techniques/Examples/RayQueryNormals/` | Shows the technique pattern without being an RTG technique |
+| 2026-10-10 | Dependencies come from **`Scripts/Dependencies.json`** (version, URL, SHA-256, size, license), downloaded by `run.bat`'s PowerShell bootstrap into `.tools/`; CMake only builds them (**no FetchContent**) | One downloader for tools, code and assets; sizes shown up front; checksums for every file; CMake never touches the network, so offline builds are guaranteed |
+| 2026-10-10 | Minimum **VS 2022 17.5** (bundles CMake 3.25) | Needed for `/Z7` via `CMAKE_MSVC_DEBUG_INFORMATION_FORMAT` and `add_subdirectory(... SYSTEM)` |
+| 2026-10-10 | The build **enforces module dependencies**: a quoted `#include` of a module not listed in `DEPENDS` (or another module's `Internal/`) fails the CMake configure step | Rules 1–2 of [[14 Project Structure]] can't silently erode |
 
 See also: [[13 Open Questions]]
