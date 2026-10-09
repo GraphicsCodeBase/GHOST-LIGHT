@@ -1,0 +1,76 @@
+# GHOST LIGHT — only source, specs, and committed content go in git.
+# Everything below is generated on the fly by run.bat or the engine.
+
+# ---- Build output ----
+Build/
+build/
+out/
+bin/
+obj/
+
+# ---- Tools bootstrapped by run.bat (Slang, validation layers, ...) ----
+.tools/
+
+# ---- Machine-specific state (settings, UI layout, last scene) ----
+User/
+imgui.ini
+
+# ---- Generated captures (screenshots, EXRs, benchmark CSVs, videos) ----
+Captures/
+
+# ---- Downloaded assets (re-fetched from Content/AssetManifest.json) ----
+Content/Assets/*
+!Content/Assets/CREDITS.md
+
+# ---- Logs ----
+*.log
+*.tlog
+
+# ---- Shader caches / compiled shaders (compiled at runtime by Slang) ----
+ShaderCache/
+*.spv
+*.slang-module
+
+# ---- CMake ----
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+cmake_install.cmake
+compile_commands.json
+_deps/
+
+# ---- Visual Studio / IDEs ----
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln
+*.vcxproj*
+*.VC.db
+*.VC.opendb
+
+# ---- Compiled binaries & debug files ----
+*.exe
+*.dll
+*.lib
+*.pdb
+*.obj
+*.ilk
+*.exp
+*.idb
+*.ipch
+
+# ---- Profiler / GPU debugger captures ----
+*.tracy
+*.rdc
+*.nsight-gfx*
+
+# ---- Obsidian per-user app state (the notes themselves ARE committed) ----
+.obsidian/
+.trash/
+
+# ---- OS junk ----
+Thumbs.db
+desktop.ini
+.DS_Store

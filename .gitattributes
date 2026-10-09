@@ -1,0 +1,19 @@
+# GHOST LIGHT line-ending rules: a fresh clone must work regardless of the user's git settings.
+
+# Normalize text files to LF in the repository.
+* text=auto
+
+# Windows scripts keep CRLF in the working tree (cmd.exe mis-parses labels in LF batch files).
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary content that must never be touched by line-ending conversion.
+*.png binary
+*.jpg binary
+*.hdr binary
+*.exr binary
+*.glb binary
+*.bin binary
+*.ktx2 binary
+*.zip binary
