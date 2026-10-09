@@ -15,6 +15,9 @@ void PerformanceOverlay::draw(const Stats& stats) {
     if (ImGui::Begin("##Performance", nullptr, flags)) {
         ImGui::Text("GHOST LIGHT  %.0f fps  %.2f ms", stats.fps, stats.fps > 0.0 ? 1000.0 / stats.fps : 0.0);
         ImGui::Text("%s  %dx%d", stats.gpuName.c_str(), stats.width, stats.height);
+        if (!stats.mode.empty()) {
+            ImGui::Text("%s", stats.mode.c_str());
+        }
         if (stats.validation) {
             ImGui::TextColored(ImVec4(1.0f, 0.75f, 0.3f, 1.0f), "Vulkan validation ON (slower)");
         }

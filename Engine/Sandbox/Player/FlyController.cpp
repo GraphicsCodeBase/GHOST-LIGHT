@@ -74,10 +74,10 @@ void FlyController::update(platform::Window& window, float deltaSeconds, float& 
     if (input.isDown(platform::Key::A)) {
         move -= right();
     }
-    if (input.isDown(platform::Key::E)) {
+    if (input.isDown(platform::Key::Space)) {
         move += up;
     }
-    if (input.isDown(platform::Key::Q)) {
+    if (input.isDown(platform::Key::C)) {
         move -= up;
     }
     if (glm::dot(move, move) > 0.0f) {

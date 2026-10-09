@@ -5,6 +5,8 @@ module Bindless;
 [[vk::binding(0, 0)]] public Texture2D gTextures[];
 [[vk::binding(1, 0)]] public SamplerState gSamplers[];
 [[vk::binding(2, 0)]] public RWTexture2D<float4> gStorageImages[];
+// One scene TLAS per frame in flight: use gSceneTlas[frame->tlasIndex] (or sceneTlas(frame) from Scene).
+[[vk::binding(3, 0)]] public RaytracingAccelerationStructure gSceneTlas[2];
 
 // Fixed sampler slots (BindlessDescriptors::Sampler).
 public static const uint kSamplerLinearRepeat = 0;

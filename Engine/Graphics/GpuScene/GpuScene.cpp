@@ -112,6 +112,7 @@ GpuScene::ModelId GpuScene::uploadModel(const assets::ModelData& model) {
     }
     for (const assets::PrimitiveData& primitive : model.primitives) {
         m_primitives.push_back({indexBase + primitive.firstIndex, primitive.indexCount, vertexBase + primitive.firstVertex, materialBase + primitive.material});
+        m_primitiveVertexCounts.push_back(primitive.vertexCount);
     }
     m_vertices.insert(m_vertices.end(), model.vertices.begin(), model.vertices.end());
     m_indices.insert(m_indices.end(), model.indices.begin(), model.indices.end());
@@ -120,7 +121,8 @@ GpuScene::ModelId GpuScene::uploadModel(const assets::ModelData& model) {
     for (const assets::MeshData& mesh : model.meshes) {
         // Importers lay a mesh's primitives out contiguously, so a mesh is one primitive range.
         const uint32_t first = mesh.primitives.empty() ? 0u : mesh.primitives.front();
-        gpuModel.meshes.push_back({primitiveBase + first, static_cast<uint32_t>(mesh.primitives.size())});
+        gpuModel.meshes.push_back(static_cast<uint32_t>(m_meshes.size()));
+        m_meshes.push_back({primitiveBase + first, static_cast<uint32_t>(mesh.primitives.size())});
     }
     for (const assets::NodeData& node : model.nodes) {
         gpuModel.nodes.push_back({node.mesh, node.transform});
@@ -194,6 +196,7 @@ void GpuScene::rebuildGeometryBuffers() {
         vkCmdPipelineBarrier2(cmd, &dependency);
     });
     ++m_geometryRevision;
+    ++m_sceneRevision;
 }
 
 void GpuScene::retireTextures(std::vector<TextureUploader::Texture>& textures) {
@@ -217,9 +220,12 @@ void GpuScene::clearModels() {
     m_vertices.clear();
     m_indices.clear();
     m_primitives.clear();
+    m_primitiveVertexCounts.clear();
     m_materials.clear();
     m_models.clear();
+    m_meshes.clear();
     m_gpuInstances.clear();
+    m_instanceMeshes.clear();
     m_gpuDraws.clear();
     for (std::vector<DrawCommand>& commands : m_drawCommands) {
         commands.clear();
@@ -227,10 +233,18 @@ void GpuScene::clearModels() {
     rebuildGeometryBuffers();
 }
 
+void GpuScene::setEnvironmentIntensity(float intensity) {
+    if (intensity != m_environmentIntensity) {
+        m_environmentIntensity = intensity;
+        ++m_sceneRevision;
+    }
+}
+
 void GpuScene::setEnvironment(const assets::ImageData* image, float intensity) {
     retireTextures(m_environment);
     m_environmentAverage = glm::vec3(0.0f);
     m_environmentIntensity = intensity;
+    ++m_sceneRevision;
     if (!image || !image->valid()) {
         return;
     }
@@ -256,7 +270,9 @@ void GpuScene::setEnvironment(const assets::ImageData* image, float intensity) {
 }
 
 void GpuScene::setInstances(const std::vector<InstanceInput>& instances) {
+    const std::vector<GpuInstance> previous = std::move(m_gpuInstances);
     m_gpuInstances.clear();
+    m_instanceMeshes.clear();
     m_gpuDraws.clear();
     std::array<std::vector<GpuDraw>, static_cast<size_t>(DrawCategory::Count)> buckets;
     for (const InstanceInput& input : instances) {
@@ -265,7 +281,8 @@ void GpuScene::setInstances(const std::vector<InstanceInput>& instances) {
         }
         const GpuModel& model = m_models[input.model];
         for (const NodeRecord& node : model.nodes) {
-            const MeshRange& mesh = model.meshes[node.mesh];
+            const uint32_t meshIndex = model.meshes[node.mesh];
+            const MeshRange& mesh = m_meshes[meshIndex];
             GpuInstance instance{};
             instance.world = input.world * node.transform;
             instance.previousWorld = input.previousWorld * node.transform;
@@ -280,6 +297,7 @@ void GpuScene::setInstances(const std::vector<InstanceInput>& instances) {
             instance.metallic = input.metallic;
             const uint32_t instanceIndex = static_cast<uint32_t>(m_gpuInstances.size());
             m_gpuInstances.push_back(instance);
+            m_instanceMeshes.push_back(meshIndex);
             for (uint32_t p = 0; p < mesh.primitiveCount; ++p) {
                 const uint32_t primitive = mesh.firstPrimitive + p;
                 const uint32_t flags = m_materials[m_primitives[primitive].material].flags;
@@ -299,9 +317,22 @@ void GpuScene::setInstances(const std::vector<InstanceInput>& instances) {
             m_gpuDraws.push_back(draw);
         }
     }
+    // GpuInstance has no padding, so a byte compare is exact.
+    if (previous.size() != m_gpuInstances.size() ||
+        std::memcmp(previous.data(), m_gpuInstances.data(), previous.size() * sizeof(GpuInstance)) != 0) {
+        ++m_sceneRevision;
+    }
 }
 
 void GpuScene::setLights(const SunInput& sun, std::vector<GpuLight> lights) {
+    const bool sunChanged = sun.enabled != m_sun.enabled || sun.directionToSun != m_sun.directionToSun ||
+                            sun.illuminance != m_sun.illuminance || sun.color != m_sun.color || sun.angularRadius != m_sun.angularRadius;
+    // GpuLight's padding is zero-initialized by the extraction system, so a byte compare is exact.
+    const bool lightsChanged =
+        lights.size() != m_lights.size() || std::memcmp(lights.data(), m_lights.data(), lights.size() * sizeof(GpuLight)) != 0;
+    if (sunChanged || lightsChanged) {
+        ++m_sceneRevision;
+    }
     m_sun = sun;
     m_lights = std::move(lights);
 }
@@ -355,6 +386,7 @@ void GpuScene::prepareFrame(uint32_t slot, uint64_t frameIndex, VkExtent2D rende
     c.sunColor = m_sun.color;
     c.sunAngularRadius = m_sun.angularRadius;
     c.hasSun = m_sun.enabled ? 1u : 0u;
+    c.tlasIndex = m_slot; // SceneAccelerationStructures keeps one TLAS per frame slot at this bindless index
     c.environmentAverage = m_environmentAverage;
     c.environmentIntensity = m_environmentIntensity;
     c.environmentTexture = m_environment.empty() ? kNoTexture : m_environment.front().bindlessIndex;

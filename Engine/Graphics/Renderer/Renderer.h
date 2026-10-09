@@ -39,9 +39,14 @@ namespace ghost::graphics::scene {
 class GpuScene;
 }
 
+namespace ghost::graphics::raytracing {
+class SceneAccelerationStructures;
+}
+
 namespace ghost::graphics::passes {
 class GBufferPass;
 class LightingPass;
+class ReferencePathTracerPass;
 class TonemapPass;
 } // namespace ghost::graphics::passes
 
@@ -49,6 +54,10 @@ namespace ghost::graphics {
 
 class Renderer {
 public:
+    // Raster: G-buffer + placeholder lighting (techniques plug in here from step 8).
+    // PathTraced: the naive reference path tracer, accumulating while nothing changes.
+    enum class Mode { Raster, PathTraced };
+
     struct Desc {
         bool validation = false;
         bool vsync = true;
@@ -92,6 +101,11 @@ public:
     shader::PipelineLibrary& pipelines() { return *m_pipelines; }
     rendergraph::RenderGraph& renderGraph() { return *m_graph; }
     scene::GpuScene& gpuScene() { return *m_gpuScene; }
+    const raytracing::SceneAccelerationStructures& accelerationStructures() const { return *m_accelerationStructures; }
+    passes::ReferencePathTracerPass& pathTracer() { return *m_pathTracer; }
+
+    void setMode(Mode mode);
+    Mode mode() const { return m_mode; }
 
 private:
     bool syncSwapchainWithWindow();
@@ -112,9 +126,12 @@ private:
     std::unique_ptr<rendergraph::RenderGraph> m_graph;
     std::unique_ptr<rendergraph::GpuTimers> m_timers;
     std::unique_ptr<scene::GpuScene> m_gpuScene;
+    std::unique_ptr<raytracing::SceneAccelerationStructures> m_accelerationStructures;
     std::unique_ptr<passes::GBufferPass> m_gbuffer;
     std::unique_ptr<passes::LightingPass> m_lighting;
+    std::unique_ptr<passes::ReferencePathTracerPass> m_pathTracer;
     std::unique_ptr<passes::TonemapPass> m_tonemap;
+    Mode m_mode = Mode::Raster;
 
     OverlayRecorder m_overlay;
     // Frame capture: requested -> recorded into a frame -> delivered when that frame completes on the GPU.

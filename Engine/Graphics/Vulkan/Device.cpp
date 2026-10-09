@@ -65,6 +65,7 @@ bool Device::create(const Instance& instance, VkSurfaceKHR surface) {
 
     VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructure{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR};
     accelerationStructure.accelerationStructure = VK_TRUE;
+    accelerationStructure.descriptorBindingAccelerationStructureUpdateAfterBind = VK_TRUE; // TLAS lives in the bindless set
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipeline{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR};
     rayTracingPipeline.rayTracingPipeline = VK_TRUE;
     VkPhysicalDeviceRayQueryFeaturesKHR rayQuery{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR};

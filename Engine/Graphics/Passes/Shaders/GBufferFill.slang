@@ -1,6 +1,6 @@
 // G-buffer fill: rasterizes every scene draw with vertex pulling (no vertex buffers: vertices are read from the scene's global
 // buffer by address) and writes what ShaderLibrary/GBuffer.slang decodes, plus motion vectors and entity IDs.
-import Bindless;
+import Material;
 import Packing;
 import Scene;
 
@@ -63,29 +63,17 @@ VertexOutput vertexMain(uint vertexIndex : SV_VulkanVertexID, uint drawIndex : S
 GBufferOutput shade(VertexOutput input, bool frontFace, bool alphaTest)
 {
     FrameConstants* frame = gConstants.frame;
-    GpuMaterial material = frame->materials[input.material];
-
-    float4 baseColor = material.baseColorFactor;
-    if (material.baseColorTexture != kNoTexture)
-    {
-        baseColor *= sampleTexture(material.baseColorTexture, kSamplerAnisotropicRepeat, input.uv);
-    }
-    if (alphaTest && baseColor.a < material.alphaCutoff)
+    MaterialSample material = sampleMaterial(frame, input.material, input.uv);
+    if (alphaTest && material.alpha < material.alphaCutoff)
     {
         discard;
     }
+    GpuInstance instance = frame->instances[input.instance];
+    applyInstanceOverrides(instance, material);
 
     // Back faces only reach here for double-sided materials: shade them with the flipped normal.
     float3 vertexNormal = normalize(input.normal) * (frontFace ? 1.0 : -1.0);
-    float3 normal = vertexNormal;
-    if (material.normalTexture != kNoTexture && dot(input.tangent.xyz, input.tangent.xyz) > 1e-8)
-    {
-        float3 tangent = normalize(input.tangent.xyz - vertexNormal * dot(vertexNormal, input.tangent.xyz));
-        float3 bitangent = cross(vertexNormal, tangent) * input.tangent.w;
-        float3 sampled = sampleTexture(material.normalTexture, kSamplerAnisotropicRepeat, input.uv).xyz * 2.0 - 1.0;
-        sampled.xy *= material.normalScale;
-        normal = normalize(tangent * sampled.x + bitangent * sampled.y + vertexNormal * sampled.z);
-    }
+    float3 normal = material.hasNormalMap ? applyNormalMap(vertexNormal, input.tangent, material.tangentNormal) : vertexNormal;
     // Triangle normal from screen-space derivatives, on the same side as the vertex normal.
     float3 geometricNormal = normalize(cross(ddy(input.worldPosition), ddx(input.worldPosition)));
     if (dot(geometricNormal, vertexNormal) < 0.0)
@@ -93,46 +81,14 @@ GBufferOutput shade(VertexOutput input, bool frontFace, bool alphaTest)
         geometricNormal = -geometricNormal;
     }
 
-    float metallic = material.metallic;
-    float roughness = material.roughness;
-    if (material.metallicRoughnessTexture != kNoTexture)
-    {
-        float4 sampled = sampleTexture(material.metallicRoughnessTexture, kSamplerAnisotropicRepeat, input.uv);
-        roughness *= sampled.g;
-        metallic *= sampled.b;
-    }
-    float3 emissive = material.emissive;
-    if (material.emissiveTexture != kNoTexture)
-    {
-        emissive *= sampleTexture(material.emissiveTexture, kSamplerAnisotropicRepeat, input.uv).rgb;
-    }
-
-    GpuInstance instance = frame->instances[input.instance];
-    if ((instance.overrideFlags & kOverrideBaseColor) != 0)
-    {
-        baseColor.rgb = instance.baseColor;
-    }
-    if ((instance.overrideFlags & kOverrideRoughness) != 0)
-    {
-        roughness = instance.roughness;
-    }
-    if ((instance.overrideFlags & kOverrideMetallic) != 0)
-    {
-        metallic = instance.metallic;
-    }
-    if ((instance.overrideFlags & kOverrideEmissive) != 0)
-    {
-        emissive = instance.emissive;
-    }
-
     float2 currentUv = input.currentClip.xy / input.currentClip.w * 0.5 + 0.5;
     float2 previousUv = input.previousClip.xy / input.previousClip.w * 0.5 + 0.5;
 
     GBufferOutput output;
     output.normal = float4(octahedralEncode(normal), octahedralEncode(geometricNormal));
-    output.albedo = float4(baseColor.rgb, 1.0);
-    output.material = float2(metallic, roughness);
-    output.emissive = float4(emissive, 1.0);
+    output.albedo = float4(material.baseColor, 1.0);
+    output.material = float2(material.metallic, material.roughness);
+    output.emissive = float4(material.emissive, 1.0);
     output.motion = previousUv - currentUv;
     output.entityId = instance.entityId;
     return output;

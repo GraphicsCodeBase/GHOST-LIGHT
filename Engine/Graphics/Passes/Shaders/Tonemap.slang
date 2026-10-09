@@ -25,7 +25,8 @@ float3 acesFitted(float3 x)
 [shader("fragment")]
 float4 fragmentMain(FullscreenVaryings input) : SV_Target
 {
-    float3 hdr = sampleTextureLevel(gConstants.input, kSamplerLinearClamp, input.uv, 0.0).rgb;
+    // Radiance beyond the RGBA16F range (the sun in an HDRI) is stored as +inf; clamp it so the curve stays finite.
+    float3 hdr = min(sampleTextureLevel(gConstants.input, kSamplerLinearClamp, input.uv, 0.0).rgb, 65504.0);
     float3 ldr = acesFitted(hdr * gConstants.exposure);
     return float4(linearToSrgb(ldr), 1.0);
 }

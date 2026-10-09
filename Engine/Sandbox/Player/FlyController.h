@@ -1,5 +1,5 @@
-// FlyController: the sandbox's free-flying camera. Hold the right mouse button to look around; WASD moves, Q/E go
-// down/up, Shift is 4x faster, Ctrl 4x slower, the mouse wheel changes the base speed.
+// FlyController: the sandbox's free-flying camera. Hold the right mouse button to look around; WASD moves, Space/C go
+// up/down, Shift is 4x faster, Ctrl 4x slower, the mouse wheel changes the base speed.
 #pragma once
 
 #include <glm/vec3.hpp>

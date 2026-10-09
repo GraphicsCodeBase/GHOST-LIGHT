@@ -29,6 +29,7 @@ public:
     using ModelId = uint32_t;
     static constexpr ModelId kInvalidModel = UINT32_MAX;
     static constexpr uint32_t kFrameSlots = 2;
+    static constexpr VkDeviceSize kVertexStride = sizeof(assets::Vertex); // position is the first member (BLAS input)
 
     // Raster draws are bucketed by the pipeline they need.
     enum class DrawCategory : uint32_t { Opaque = 0, DoubleSided = 1, AlphaMasked = 2, Count = 3 };
@@ -81,7 +82,7 @@ public:
     void clearModels();
     // nullptr = no HDRI: shaders fall back to the procedural sky (ShaderLibrary/Environment.slang).
     void setEnvironment(const assets::ImageData* image, float intensity);
-    void setEnvironmentIntensity(float intensity) { m_environmentIntensity = intensity; }
+    void setEnvironmentIntensity(float intensity);
 
     // Per-frame scene description (CPU side; copied to the GPU in prepareFrame).
     void setInstances(const std::vector<InstanceInput>& instances);
@@ -98,27 +99,35 @@ public:
     const std::vector<DrawCommand>& drawCommands(DrawCategory category) const { return m_drawCommands[static_cast<uint32_t>(category)]; }
     bool hasGeometry() const { return !m_gpuDraws.empty(); }
 
-    // For acceleration structures (step 7): per model, its meshes as primitive ranges.
+    // For acceleration structures: every mesh of every model (one BLAS each), as a range of primitives (one BLAS
+    // geometry each), and for every instance the mesh it places.
     struct MeshRange {
         uint32_t firstPrimitive = 0;
         uint32_t primitiveCount = 0;
     };
     struct NodeRecord {
-        uint32_t mesh = 0;
+        uint32_t mesh = 0; // into the model's meshes
         glm::mat4 transform{1.0f};
     };
     struct GpuModel {
-        std::vector<MeshRange> meshes;
+        std::vector<uint32_t> meshes; // global mesh indices (into meshes())
         std::vector<NodeRecord> nodes;
     };
     const std::vector<GpuModel>& models() const { return m_models; }
+    const std::vector<MeshRange>& meshes() const { return m_meshes; }
     const std::vector<GpuPrimitive>& primitives() const { return m_primitives; }
+    const std::vector<uint32_t>& primitiveVertexCounts() const { return m_primitiveVertexCounts; } // parallel to primitives()
+    const std::vector<GpuMaterial>& materials() const { return m_materials; }
     const std::vector<GpuInstance>& instances() const { return m_gpuInstances; }
+    const std::vector<uint32_t>& instanceMeshes() const { return m_instanceMeshes; } // parallel to instances()
     VkDeviceAddress vertexBufferAddress() const { return m_vertexBuffer.address(); }
     VkDeviceAddress indexBufferAddress() const { return m_indexBuffer.address(); }
     uint32_t vertexCount() const { return static_cast<uint32_t>(m_vertices.size()); }
     // Increments whenever geometry changes (BLAS rebuild trigger).
     uint64_t geometryRevision() const { return m_geometryRevision; }
+    // Increments whenever anything that changes the rendered image changes (geometry, instances, lights, environment);
+    // the camera is not included. Accumulating passes restart when it moves.
+    uint64_t sceneRevision() const { return m_sceneRevision; }
 
 private:
     struct FrameSlot {
@@ -141,14 +150,17 @@ private:
     std::vector<assets::Vertex> m_vertices;
     std::vector<uint32_t> m_indices;
     std::vector<GpuPrimitive> m_primitives;
+    std::vector<uint32_t> m_primitiveVertexCounts;
     std::vector<GpuMaterial> m_materials;
     std::vector<GpuModel> m_models;
+    std::vector<MeshRange> m_meshes;
     std::vector<TextureUploader::Texture> m_textures;
     vulkan::GpuBuffer m_vertexBuffer;
     vulkan::GpuBuffer m_indexBuffer;
     vulkan::GpuBuffer m_primitiveBuffer;
     vulkan::GpuBuffer m_materialBuffer;
     uint64_t m_geometryRevision = 0;
+    uint64_t m_sceneRevision = 0;
 
     std::vector<TextureUploader::Texture> m_environment;
     glm::vec3 m_environmentAverage{0.0f};
@@ -156,6 +168,7 @@ private:
 
     // This frame.
     std::vector<GpuInstance> m_gpuInstances;
+    std::vector<uint32_t> m_instanceMeshes;
     std::vector<GpuDraw> m_gpuDraws;
     std::array<std::vector<DrawCommand>, static_cast<size_t>(DrawCategory::Count)> m_drawCommands;
     std::vector<GpuLight> m_lights;

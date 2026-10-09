@@ -24,10 +24,10 @@ tags: [roadmap]
 - [x] EnTT world + core components (`Transform`, `Name`, `MeshRenderer`, lights, `Camera`)
 - [x] JSON **scene loading** (entities, prefabs, lights, environment, technique settings)
 - [x] glTF loading → asset registry → GPU scene extraction from ECS
-- [ ] BLAS per mesh, TLAS per frame, SBT builder, ray query
+- [ ] BLAS per mesh, TLAS per frame, SBT builder, ray query (all ✅ but ray query, which the step 8 example exercises)
 - [x] G-buffer incl. motion vectors and entity ID
 - [x] Placeholder lighting (sun, no shadows) + tonemap + present
-- [ ] Naive reference path tracer with accumulation (`RTG-TODO` stubs)
+- [x] Naive reference path tracer with accumulation (`RTG-TODO` stubs)
 - [ ] Technique API, auto-registration, auto ImGui params
 - [ ] Example technique (not RTG): "visualize normals via ray query"
 - [x] Slang hot-reload + **error overlay** (last good shader keeps running)

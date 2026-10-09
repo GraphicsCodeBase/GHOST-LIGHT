@@ -35,15 +35,16 @@ bool BindlessDescriptors::create(const Device& device) {
         return false;
     }
 
-    const std::array<VkDescriptorSetLayoutBinding, 3> bindings{{
+    const std::array<VkDescriptorSetLayoutBinding, 4> bindings{{
         {kSampledImageBinding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, kMaxSampledImages, VK_SHADER_STAGE_ALL, nullptr},
         {kSamplerBinding, VK_DESCRIPTOR_TYPE_SAMPLER, kMaxSamplers, VK_SHADER_STAGE_ALL, nullptr},
         {kStorageImageBinding, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, kMaxStorageImages, VK_SHADER_STAGE_ALL, nullptr},
+        {kAccelerationStructureBinding, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, kMaxAccelerationStructures, VK_SHADER_STAGE_ALL, nullptr},
     }};
     // Partially bound: unused slots may stay empty. Update-after-bind: slots can be written while the set is bound.
     constexpr VkDescriptorBindingFlags kFlags = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT |
                                                 VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT;
-    const std::array<VkDescriptorBindingFlags, 3> bindingFlags{kFlags, kFlags, kFlags};
+    const std::array<VkDescriptorBindingFlags, 4> bindingFlags{kFlags, kFlags, kFlags, kFlags};
 
     VkDescriptorSetLayoutBindingFlagsCreateInfo flagsInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO};
     flagsInfo.bindingCount = static_cast<uint32_t>(bindingFlags.size());
@@ -56,10 +57,11 @@ bool BindlessDescriptors::create(const Device& device) {
     VK_CHECK(vkCreateDescriptorSetLayout(vk, &layoutInfo, nullptr, &m_setLayout));
     DebugUtils::setName(m_setLayout, "Bindless.SetLayout");
 
-    const std::array<VkDescriptorPoolSize, 3> poolSizes{{
+    const std::array<VkDescriptorPoolSize, 4> poolSizes{{
         {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, kMaxSampledImages},
         {VK_DESCRIPTOR_TYPE_SAMPLER, kMaxSamplers},
         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, kMaxStorageImages},
+        {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, kMaxAccelerationStructures},
     }};
     VkDescriptorPoolCreateInfo poolInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
     poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
@@ -164,6 +166,21 @@ void BindlessDescriptors::updateStorageImage(uint32_t index, VkImageView view) {
 
 void BindlessDescriptors::freeStorageImage(uint32_t index) {
     m_storageImages.release(index);
+}
+
+void BindlessDescriptors::setAccelerationStructure(uint32_t index, VkAccelerationStructureKHR accelerationStructure) {
+    GHOST_ASSERT(index < kMaxAccelerationStructures, "Acceleration structure slot out of range");
+    VkWriteDescriptorSetAccelerationStructureKHR asInfo{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR};
+    asInfo.accelerationStructureCount = 1;
+    asInfo.pAccelerationStructures = &accelerationStructure;
+    VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    write.pNext = &asInfo;
+    write.dstSet = m_set;
+    write.dstBinding = kAccelerationStructureBinding;
+    write.dstArrayElement = index;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+    vkUpdateDescriptorSets(m_device->handle(), 1, &write, 0, nullptr);
 }
 
 void BindlessDescriptors::bind(VkCommandBuffer cmd, VkPipelineBindPoint bindPoint) const {

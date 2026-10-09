@@ -5,12 +5,13 @@
 | Module | Provides | Status |
 |---|---|---|
 | `Math` | `kPi`, `kTwoPi`, `kInvPi`, `linearToSrgb`, `srgbToLinear` | ✅ |
-| `Bindless` | `gTextures[]`, `gSamplers[]`, `gStorageImages[]`, sampler slot constants, `sampleTexture/sampleTextureLevel/loadTexture` | ✅ |
-| `Scene` | Mirror of `GpuSceneTypes.h` (`Vertex`, `GpuMaterial`, `GpuInstance`, `GpuLight`, `FrameConstants` with typed buffer pointers), `equirectUv`, `reconstructWorldPosition`, `cameraRayDirection` | ✅ (TLAS + hit helpers: step 7) |
+| `Bindless` | `gTextures[]`, `gSamplers[]`, `gStorageImages[]`, `gSceneTlas[2]` (one TLAS per frame in flight), sampler slot constants, `sampleTexture/sampleTextureLevel/loadTexture` | ✅ |
+| `Scene` | Mirror of `GpuSceneTypes.h` (`Vertex`, `GpuMaterial`, `GpuInstance`, `GpuLight`, `FrameConstants` with typed buffer pointers), `equirectUv`, `reconstructWorldPosition`, `cameraRayDirection`, `sceneTlas(frame)`, `HitSurface loadHitSurface(frame, instance, geometry, triangle, barycentrics)` | ✅ |
+| `Material` | `sampleMaterial` (fragment, implicit LOD) / `sampleMaterialLevel` (explicit LOD) → `MaterialSample`, `alphaTestFails`, `applyInstanceOverrides`, `applyNormalMap` | ✅ |
 | `Packing` | `octahedralEncode/Decode` (unit vectors in two SNORM values) | ✅ |
 | `GBuffer` | `GBufferIndices`, `Surface`, `loadSurface(frame, indices, pixel)`; documents the G-buffer layout | ✅ |
 | `Environment` | `environmentRadiance(frame, direction)` (HDRI or procedural daylight sky, × intensity, in nits), `environmentAverageRadiance(frame)` | ✅ |
-| `Random` | PCG RNG, blue noise lookup | step 9 |
+| `Random` | `pcgHash`, `Rng` (`next()`, `next2()`), `makeRng(pixel, sampleIndex)` | ✅ (blue noise: step 9) |
 
 > [!warning] Not here, on purpose
 > BRDF importance sampling, MIS, robust ray offsets, reservoirs. Those are techniques ([[08 RTG Technique Catalog]]).

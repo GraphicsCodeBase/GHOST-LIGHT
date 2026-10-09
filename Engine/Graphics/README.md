@@ -13,6 +13,6 @@ Physics: the build rejects such includes, so techniques can't reach the ECS even
 | [ShaderCompiler](ShaderCompiler/README.md) | Slang → SPIR-V, pipelines, hot reload, error overlay data | M0a step 3 ✅ |
 | [RenderGraph](RenderGraph/README.md) | Passes, transient/persistent/history resources, automatic barriers, GPU timers | M0a step 4 ✅ |
 | [GpuScene](GpuScene/README.md) | Global geometry/material buffers, bindless textures, per-frame instances/lights/frame constants | M0a step 6 ✅ |
-| RayTracing | BLAS/TLAS, shader binding table, RT pipelines | M0a step 7 |
-| [Passes](Passes/README.md) | G-buffer, placeholder lighting, tonemap (step 6 ✅), reference path tracer (step 7) | M0a steps 3–7 |
+| [RayTracing](RayTracing/README.md) | BLAS per mesh (compacted), TLAS per frame, shader binding tables, hot-reloadable RT pipelines | M0a step 7 ✅ |
+| [Passes](Passes/README.md) | G-buffer, placeholder lighting, tonemap, naive reference path tracer | M0a steps 3–7 ✅ |
 | TechniqueRuntime | Technique base class, registry, `Param<T>` | M0a step 8 |

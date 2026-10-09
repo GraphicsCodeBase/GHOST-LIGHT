@@ -40,6 +40,7 @@ tags: [spec, structure]
 - `Assets` → Core only. CPU-side data (meshes, images); no Vulkan.
 - `World` → Core, Assets, Graphics/GpuScene. Its `GpuSceneExtractionSystem` pushes plain data into `GpuScene`.
 - `Graphics/GpuScene` → Core, Assets (CPU structs only), Graphics/Vulkan. The one Graphics module that sees Assets.
+- `Graphics/RayTracing` → Core, Graphics/Vulkan, Graphics/ShaderCompiler, Graphics/GpuScene. `Graphics/Passes` → RayTracing too.
 - `Sandbox/Player` → Core, Platform.
 - `Physics` → World (M0b).
 - `UI` → Graphics, Platform · `DebugTools` → UI, Graphics · `App` → everything.

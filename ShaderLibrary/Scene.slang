@@ -1,6 +1,9 @@
 // Scene data every pass and technique reads: the GPU struct layouts (mirror of Engine/Graphics/GpuScene/GpuSceneTypes.h),
-// reached through the frame constants' buffer device addresses. Import with `import Scene;`.
+// reached through the frame constants' buffer device addresses, plus hit-surface reconstruction for ray tracing.
+// Import with `import Scene;`.
 module Scene;
+
+import Bindless;
 
 public static const uint kNoTexture = 0xFFFFFFFF;
 public static const uint kMaterialAlphaMask = 1;
@@ -108,7 +111,7 @@ public struct FrameConstants
     public GpuDraw* draws;
     public GpuLight* lights;
     public uint hasSun;
-    public uint padding;
+    public uint tlasIndex; // gSceneTlas[tlasIndex] (Bindless): this frame's TLAS
 };
 
 // Equirectangular environment mapping: +Y up, u = 0.5 at -Z.
@@ -133,4 +136,49 @@ public float3 cameraRayDirection(FrameConstants* frame, float2 uv)
 {
     float4 world = mul(frame->inverseViewProjection, float4(uv * 2.0 - 1.0, 0.0, 1.0));
     return normalize(world.xyz);
+}
+
+// This frame's top-level acceleration structure: every instance of the GPU scene, custom index = instance index.
+public RaytracingAccelerationStructure sceneTlas(FrameConstants* frame)
+{
+    return gSceneTlas[frame->tlasIndex];
+}
+
+// A ray hit turned back into a surface.
+public struct HitSurface
+{
+    public float3 position;        // world space
+    public float3 geometricNormal; // the triangle's normal (counter-clockwise front), world space
+    public float3 normal;          // interpolated vertex normal, world space (no normal map)
+    public float4 tangent;         // xyz world tangent, w bitangent sign
+    public float2 uv;
+    public uint material;
+    public uint instance;
+};
+
+// Arguments come straight from the hit: InstanceID() (the TLAS custom index = instance index), GeometryIndex() (the
+// primitive within the mesh), PrimitiveIndex() (the triangle) and the barycentrics of the hit attributes.
+public HitSurface loadHitSurface(FrameConstants* frame, uint instanceIndex, uint geometryIndex, uint triangleIndex, float2 barycentrics)
+{
+    GpuInstance instance = frame->instances[instanceIndex];
+    GpuPrimitive primitive = frame->primitives[instance.firstPrimitive + geometryIndex];
+    uint base = primitive.firstIndex + triangleIndex * 3;
+    Vertex v0 = frame->vertices[primitive.firstVertex + frame->indices[base + 0]];
+    Vertex v1 = frame->vertices[primitive.firstVertex + frame->indices[base + 1]];
+    Vertex v2 = frame->vertices[primitive.firstVertex + frame->indices[base + 2]];
+    float3 w = float3(1.0 - barycentrics.x - barycentrics.y, barycentrics.x, barycentrics.y);
+    float3x3 normalMatrix = (float3x3)instance.normalMatrix;
+
+    HitSurface surface;
+    float3 localPosition = v0.position * w.x + v1.position * w.y + v2.position * w.z;
+    surface.position = mul(instance.world, float4(localPosition, 1.0)).xyz;
+    surface.normal = normalize(mul(normalMatrix, v0.normal * w.x + v1.normal * w.y + v2.normal * w.z));
+    float3 geometric = mul(normalMatrix, cross(v1.position - v0.position, v2.position - v0.position));
+    surface.geometricNormal = dot(geometric, geometric) > 0.0 ? normalize(geometric) : surface.normal; // degenerate triangle
+    float3 tangent = v0.tangent.xyz * w.x + v1.tangent.xyz * w.y + v2.tangent.xyz * w.z;
+    surface.tangent = float4(mul((float3x3)instance.world, tangent), v0.tangent.w);
+    surface.uv = v0.uv * w.x + v1.uv * w.y + v2.uv * w.z;
+    surface.material = primitive.material;
+    surface.instance = instanceIndex;
+    return surface;
 }

@@ -1,6 +1,7 @@
 {
   "version": 1,
   "name": "Cornell Box",
+  "environment": { "intensity": 0.0 },
   "exposure": { "ev100": 1.0 },
   "player": { "mode": "Fly", "start": "Front" },
   "cameraBookmarks": [

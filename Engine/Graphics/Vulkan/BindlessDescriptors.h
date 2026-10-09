@@ -1,4 +1,5 @@
-// The one global descriptor set (bindless sampled images, samplers, storage images) and the one pipeline layout all pipelines share.
+// The one global descriptor set (bindless sampled images, samplers, storage images, the scene TLASes) and the one
+// pipeline layout all pipelines share.
 #pragma once
 
 #include <volk.h>
@@ -16,9 +17,12 @@ public:
     static constexpr uint32_t kSampledImageBinding = 0;
     static constexpr uint32_t kSamplerBinding = 1;
     static constexpr uint32_t kStorageImageBinding = 2;
+    static constexpr uint32_t kAccelerationStructureBinding = 3;
     static constexpr uint32_t kMaxSampledImages = 16384;
     static constexpr uint32_t kMaxSamplers = 32;
     static constexpr uint32_t kMaxStorageImages = 4096;
+    // One scene TLAS per frame in flight (index = frame slot), so a TLAS can be rebuilt while the other frame runs.
+    static constexpr uint32_t kMaxAccelerationStructures = 2;
     // Push constants carry buffer device addresses and per-pass parameters. 256 bytes is guaranteed on every RTX GPU.
     static constexpr uint32_t kPushConstantSize = 256;
 
@@ -41,6 +45,8 @@ public:
     uint32_t addStorageImage(VkImageView view);
     void updateStorageImage(uint32_t index, VkImageView view);
     void freeStorageImage(uint32_t index);
+    // Fixed slots (no allocation): slot i holds frame slot i's scene TLAS.
+    void setAccelerationStructure(uint32_t index, VkAccelerationStructureKHR accelerationStructure);
 
     VkDescriptorSetLayout setLayout() const { return m_setLayout; }
     VkDescriptorSet set() const { return m_set; }

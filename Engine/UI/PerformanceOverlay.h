@@ -1,4 +1,4 @@
-// Small corner readout: frame rate, frame time, GPU name and whether validation is on.
+// Small corner readout: frame rate, frame time, GPU name, render mode, whether validation is on, GPU pass timings.
 #pragma once
 
 #include <string>
@@ -15,6 +15,7 @@ public:
         bool validation = false;
         int width = 0;
         int height = 0;
+        std::string mode;                                          // e.g. "Raster" or "Path traced, 120 samples"
         double gpuMilliseconds = 0.0;                              // whole frame on the GPU
         std::vector<std::pair<std::string, double>> passTimings;   // render graph pass -> ms
     };

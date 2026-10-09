@@ -7,6 +7,8 @@
 #include "Core/Paths.h"
 #include "DebugTools/FrameCapture.h"
 #include "Graphics/GpuScene/GpuScene.h"
+#include "Graphics/Passes/ReferencePathTracerPass.h"
+#include "Graphics/RayTracing/SceneAccelerationStructures.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
@@ -208,12 +210,48 @@ struct PlayerCheck {
     }
 };
 
+// Ray tracing: acceleration structures exist for the scene, and the reference path tracer accumulates samples in the
+// Cornell box while the camera stands still (a restart every frame would mean change detection is broken).
+struct PathTracerCheck {
+    std::string failure = "never ran";
+    std::filesystem::path capture;
+
+    void step(ghost::app::Engine& engine, uint64_t frame) {
+        auto& renderer = engine.renderer();
+        if (frame == 2) {
+            const auto& structures = renderer.accelerationStructures();
+            if (structures.blasCount() < 2 || structures.tlasInstanceCount() < 2) {
+                failure = "acceleration structures missing (" + std::to_string(structures.blasCount()) + " BLAS, " +
+                          std::to_string(structures.tlasInstanceCount()) + " TLAS instances)";
+                return;
+            }
+        } else if (frame == 130) {
+            engine.loadScene("Scenes/CornellBox.scene.json");
+            renderer.setMode(ghost::graphics::Renderer::Mode::PathTraced);
+        } else if (frame == 180) {
+            const uint32_t samples = renderer.pathTracer().sampleCount();
+            std::printf("path tracer: %u samples after 50 frames\n", samples);
+            if (samples < 40) {
+                failure = "the path tracer restarted its accumulation (" + std::to_string(samples) + " samples after 50 frames)";
+                return;
+            }
+            capture = ghost::core::Paths::build() / "SmokeTest" / "PathTracedCornellBox.png";
+            ghost::debugtools::FrameCapture::requestPng(renderer, capture);
+            failure.clear();
+        } else if (frame == 190) {
+            renderer.setMode(ghost::graphics::Renderer::Mode::Raster);
+            engine.loadScene("Scenes/Sponza.scene.json");
+        }
+    }
+};
+
 } // namespace
 
 int main() {
     HotReloadCheck hotReload;
     SceneCheck sceneCheck;
     PlayerCheck playerCheck;
+    PathTracerCheck pathTracerCheck;
     std::filesystem::path capturePath;
     size_t passTimings = 0;
     ghost::app::EngineOptions options;
@@ -231,6 +269,7 @@ int main() {
         hotReload.step(engine, frame);
         sceneCheck.step(engine, frame);
         playerCheck.step(engine, frame);
+        pathTracerCheck.step(engine, frame);
         if (frame == 200) {
             // The last rendered image, kept for inspection: Build/SmokeTest/LastFrame.png.
             capturePath = ghost::core::Paths::build() / "SmokeTest" / "LastFrame.png";
@@ -264,9 +303,13 @@ int main() {
     const bool hotReloadOk = hotReload.phase == HotReloadCheck::Phase::Done;
     std::error_code ec;
     const bool captureOk = !capturePath.empty() && std::filesystem::file_size(capturePath, ec) > 1000;
-    const bool timingsOk = passTimings >= 4; // GBuffer, Lighting, Tonemap, UI
+    const bool timingsOk = passTimings >= 5; // TLAS, GBuffer, Lighting, Tonemap, UI
     const bool scenesOk = sceneCheck.failures.empty() && sceneCheck.scenesLoaded >= 2;
     const bool playerOk = playerCheck.failure.empty();
+    const bool pathTracerOk = pathTracerCheck.failure.empty();
+    if (!pathTracerOk) {
+        std::printf("path tracer check FAILED: %s\n", pathTracerCheck.failure.c_str());
+    }
     if (!playerOk) {
         std::printf("player check FAILED: %s\n", playerCheck.failure.c_str());
     }
@@ -276,7 +319,7 @@ int main() {
     std::printf("scenes: %zu shipped scene(s) loaded cleanly\n", sceneCheck.scenesLoaded);
     const int errors = ghost::core::Log::errorCount();
     const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk &&
-                        scenesOk && playerOk;
+                        scenesOk && playerOk && pathTracerOk;
     std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, capture %s, GPU timers %zu passes, "
                 "engine exit code %d -> %s\n",
                 static_cast<unsigned long long>(frames), static_cast<unsigned long long>(kFramesToRun), errors,

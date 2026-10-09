@@ -1,5 +1,5 @@
-// Renderer startup/shutdown order and the per-frame cycle: hot reload -> acquire -> GPU scene upload -> render graph ->
-// submit -> present.
+// Renderer startup/shutdown order and the per-frame cycle: hot reload -> BLAS updates -> acquire -> GPU scene upload ->
+// render graph (TLAS build first) -> submit -> present.
 #include "Graphics/Renderer/Renderer.h"
 
 #include "Core/Log.h"
@@ -7,7 +7,9 @@
 #include "Graphics/GpuScene/GpuScene.h"
 #include "Graphics/Passes/GBufferPass.h"
 #include "Graphics/Passes/LightingPass.h"
+#include "Graphics/Passes/ReferencePathTracerPass.h"
 #include "Graphics/Passes/TonemapPass.h"
+#include "Graphics/RayTracing/SceneAccelerationStructures.h"
 #include "Graphics/RenderGraph/GpuTimers.h"
 #include "Graphics/RenderGraph/RenderGraph.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
@@ -81,10 +83,14 @@ bool Renderer::initialize(platform::Window& window, const Desc& desc) {
 
     m_gpuScene = std::make_unique<scene::GpuScene>();
     m_gpuScene->initialize(*m_device, *m_bindless, *m_deletionQueue);
+    m_accelerationStructures = std::make_unique<raytracing::SceneAccelerationStructures>();
+    m_accelerationStructures->initialize(*m_device, *m_bindless, *m_deletionQueue);
     m_gbuffer = std::make_unique<passes::GBufferPass>();
     m_gbuffer->initialize(*m_pipelines);
     m_lighting = std::make_unique<passes::LightingPass>();
     m_lighting->initialize(*m_pipelines);
+    m_pathTracer = std::make_unique<passes::ReferencePathTracerPass>();
+    m_pathTracer->initialize(*m_pipelines, *m_device, *m_deletionQueue);
     m_tonemap = std::make_unique<passes::TonemapPass>();
     m_tonemap->initialize(*m_pipelines, m_swapchain->format());
     buildRenderGraph();
@@ -97,8 +103,13 @@ void Renderer::buildRenderGraph() {
     rendergraph::RenderGraph& graph = *m_graph;
     graph.reset();
     graph.declareExternal(kSwapchain, m_swapchain->format());
+    // Every frame starts by rebuilding this frame slot's TLAS, so any later pass can trace rays or run ray queries.
+    graph.addPass(
+        "TLAS", rendergraph::PassKind::Compute, [](rendergraph::PassBuilder&) {},
+        [this](rendergraph::PassContext& ctx) { m_accelerationStructures->recordTlasBuild(ctx.cmd(), m_frames->slot(), *m_gpuScene); });
     m_gbuffer->addTo(graph, *m_gpuScene);
     m_lighting->addTo(graph, *m_gpuScene);
+    m_pathTracer->addTo(graph, *m_gpuScene);
     m_tonemap->addTo(graph, kSwapchain);
     graph.addPass(
         "UI", rendergraph::PassKind::Raster,
@@ -114,6 +125,15 @@ void Renderer::buildRenderGraph() {
         [source](rendergraph::PassBuilder& builder) { *source = builder.copySource(kSwapchain); },
         [this, source](rendergraph::PassContext& ctx) { recordCapture(ctx.cmd(), ctx.image(*source)); });
     graph.setPassEnabled("Capture", false);
+    setMode(m_mode);
+}
+
+void Renderer::setMode(Mode mode) {
+    m_mode = mode;
+    const bool raster = mode == Mode::Raster;
+    m_graph->setPassEnabled("GBuffer", raster);
+    m_graph->setPassEnabled("Lighting", raster);
+    m_graph->setPassEnabled("PathTracer", !raster);
 }
 
 void Renderer::waitIdle() const {
@@ -127,10 +147,12 @@ void Renderer::shutdown() {
     deliverCaptureIfReady(/*gpuIdle*/ true);
     // Reverse creation order: everything that lives on the device goes before the device, the surface before the instance.
     m_tonemap.reset();
+    m_pathTracer.reset();
     m_lighting.reset();
     m_gbuffer.reset();
     m_timers.reset();
     m_graph.reset();
+    m_accelerationStructures.reset();
     m_gpuScene.reset(); // its retired buffers/textures sit in the deletion queue, flushed below
     m_captureBuffer.reset();
     m_pipelines.reset();
@@ -207,6 +229,8 @@ void Renderer::renderFrame(const OverlayRecorder& overlay) {
     m_deletionQueue->flush(m_frames->completedFrame());
     deliverCaptureIfReady(false);
     m_pipelines->update(m_frames->frameNumber());
+    // New geometry since last frame (a model was loaded): rebuild the BLASes before recording.
+    m_accelerationStructures->updateBlases(*m_gpuScene, m_frames->frameNumber());
     if (!syncSwapchainWithWindow()) {
         return;
     }

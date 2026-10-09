@@ -116,7 +116,7 @@ struct FrameConstants {
     uint64_t draws;
     uint64_t lights;
     uint32_t hasSun;
-    uint32_t padding;
+    uint32_t tlasIndex; // gSceneTlas[tlasIndex] in shaders (one TLAS per frame in flight)
 };
 static_assert(sizeof(FrameConstants) == 480);
 
