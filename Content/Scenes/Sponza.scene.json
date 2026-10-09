@@ -1,7 +1,7 @@
 {
   "version": 1,
   "name": "Sponza",
-  "environment": { "hdri": "Assets/HDRI/kloofendal_48d_partly_cloudy_2k.hdr", "intensity": 1.0 },
+  "environment": { "hdri": "Assets/HDRI/kloofendal_48d_partly_cloudy_2k.hdr", "intensity": 5000.0 },
   "exposure": { "ev100": 14.0 },
   "player": { "mode": "Fly", "start": "Atrium" },
   "cameraBookmarks": [

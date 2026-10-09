@@ -1,4 +1,4 @@
-// The engine: owns the window, user settings and (in later steps) renderer and world, and runs the frame loop.
+// The engine: owns the window, user settings, renderer, assets, world and player, and runs the frame loop.
 #pragma once
 
 #include "App/EngineOptions.h"
@@ -24,8 +24,12 @@ class AssetRegistry;
 }
 namespace ghost::world {
 class World;
+class GpuSceneExtractionSystem;
 struct SceneLoadResult;
 } // namespace ghost::world
+namespace ghost::sandbox {
+class FlyController;
+}
 
 namespace ghost::app {
 
@@ -46,6 +50,7 @@ public:
     graphics::Renderer& renderer() { return *m_renderer; }
     world::World& world() { return *m_world; }
     assets::AssetRegistry& assets() { return *m_assets; }
+    sandbox::FlyController& player() { return *m_player; }
 
     // Loads a scene (relative to Content/), logs its problems and shows them on screen. Returns false when the file
     // could not be read or parsed (the previous scene stays).
@@ -58,6 +63,8 @@ private:
     void updateWindowTitle();
     void drawUi();
     void reportSceneResult(const world::SceneLoadResult& result, const std::string& contentPath);
+    void placePlayerAtStart();
+    void updateGpuScene();
     void saveUserSettings();
 
     EngineOptions m_options;
@@ -68,6 +75,9 @@ private:
     std::unique_ptr<ui::ImGuiLayer> m_ui;
     std::unique_ptr<assets::AssetRegistry> m_assets;
     std::unique_ptr<world::World> m_world;
+    std::unique_ptr<world::GpuSceneExtractionSystem> m_extraction;
+    std::unique_ptr<sandbox::FlyController> m_player;
+    bool m_resetCameraHistory = true; // no motion vectors across a teleport
     std::vector<std::string> m_sceneErrors;   // shown by SceneErrorOverlay until dismissed
     std::vector<std::string> m_sceneWarnings;
     uint64_t m_framesRun = 0;

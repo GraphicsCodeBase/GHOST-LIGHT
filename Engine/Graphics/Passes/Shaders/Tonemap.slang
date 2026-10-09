@@ -7,7 +7,7 @@ import Math;
 struct TonemapConstants
 {
     uint input;      // sampled index of scene.color
-    float exposure;  // linear multiplier (2^EV)
+    float exposure;  // linear multiplier: 1 / (1.2 * 2^EV100)
 };
 
 [[vk::push_constant]] ConstantBuffer<TonemapConstants> gConstants;

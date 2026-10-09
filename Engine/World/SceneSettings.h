@@ -21,8 +21,8 @@ struct CameraBookmark {
 struct SceneSettings {
     std::string name;
     std::string file;                 // relative to Content/
-    std::string environmentHdri;      // relative to Content/; empty = procedural sky
-    float environmentIntensity = 1.0f;
+    std::string environmentHdri;      // relative to Content/; empty = procedural daylight sky
+    float environmentIntensity = 1.0f; // HDRI texel -> nits multiplier (HDRIs are not absolute: ~5000 for daylight); the procedural sky is already in nits
     assets::EnvironmentHandle environment = assets::kInvalidEnvironment;
     float exposureEv100 = 14.0f;      // camera exposure; ~14-15 for a sunlit scene with a 100 000 lux sun
     std::string playerMode = "Fly";

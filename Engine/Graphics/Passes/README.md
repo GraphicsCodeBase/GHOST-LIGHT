@@ -4,11 +4,14 @@
 
 | Pass | What it does | Status |
 |---|---|---|
-| `BackgroundPass` | Compute: procedural HDR sky + ghost-light bulb into `scene.color` (fallback background when a scene has no HDRI) | ✅ |
-| `TonemapPass` | Raster: `scene.color` → exposure → ACES fit → sRGB into the swapchain | ✅ |
-| G-buffer, lighting, reference path tracer | Raster G-buffer with motion vectors + entity ID, placeholder sun light, naive path tracer | steps 6–7 |
+| `GBufferPass` | Raster, vertex pulling from the GPU scene: writes `gbuffer.depth/normal/albedo/material/emissive/motion/entityId` (layout in `ShaderLibrary/GBuffer.slang`). Three pipelines: opaque, double-sided, alpha-masked | ✅ |
+| `LightingPass` | Compute: placeholder deferred lighting into `scene.color` (Lambert sun + point/spot, no shadows, constant environment ambient, emission; sky pixels show the environment) | ✅ |
+| `TonemapPass` | Raster: `scene.color` × exposure (from the scene's EV100) → ACES fit → sRGB into the swapchain | ✅ |
+| Reference path tracer | Naive path tracer with accumulation | step 7 |
 
-Passes add themselves with `pass.addTo(graph)`; the UI and frame-capture passes are added by the Renderer.
+Frame today: GBuffer → Lighting → Tonemap → UI (→ Capture when a screenshot is requested). Passes add themselves with
+`pass.addTo(graph, scene)`; the UI and frame-capture passes are added by the Renderer.
 
-**Depends on:** Core, Graphics/Vulkan, Graphics/ShaderCompiler.
-**Not responsible for:** technique code (Techniques/), frame orchestration (Renderer), resource barriers (RenderGraph).
+**Depends on:** Core, Graphics/Vulkan, Graphics/ShaderCompiler, Graphics/RenderGraph, Graphics/GpuScene.
+**Not responsible for:** technique code (Techniques/), frame orchestration (Renderer), resource barriers (RenderGraph),
+shadows and BRDFs (those are the user's techniques: M1 and M2 in [[07 Roadmap]]).

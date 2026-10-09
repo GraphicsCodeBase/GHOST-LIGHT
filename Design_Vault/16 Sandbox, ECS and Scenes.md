@@ -40,7 +40,7 @@ tags: [spec, ecs, sandbox, scenes, physics]
 {
   "version": 1,
   "name": "Sponza Shadows Demo",
-  "environment": { "hdri": "Assets/HDRI/kloofendal_48d_partly_cloudy.hdr", "intensity": 1.0 },
+  "environment": { "hdri": "Assets/HDRI/kloofendal_48d_partly_cloudy_2k.hdr", "intensity": 5000.0 },
   "player": { "mode": "Fly", "start": "Entrance" },
   "cameraBookmarks": [
     { "name": "Entrance", "position": [-10, 2, 0], "yawPitch": [90, -5] }
@@ -58,6 +58,10 @@ tags: [spec, ecs, sandbox, scenes, physics]
   }
 }
 ```
+
+`environment.intensity` converts HDRI texels to radiance in **nits** (HDRIs aren't absolute; ~5000 suits a daylight
+HDRI at EV100 14; the engine logs the resulting average luminance). Without `hdri` the scene gets a procedural daylight
+sky that is already in nits (intensity 1). See [[12 Decisions Log]].
 - **Hot reload:** editing the file updates the running scene.
 - **Save (Ctrl+S)** writes the current world back, including spawned objects and technique settings.
 - Clear error with file/line/field on bad JSON. Never crashes.

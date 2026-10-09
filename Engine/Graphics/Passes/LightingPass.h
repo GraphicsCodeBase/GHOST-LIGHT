@@ -1,4 +1,4 @@
-// Procedural HDR sky into scene.color (compute). Placeholder scene until the G-buffer and lighting passes exist.
+// Lighting pass: placeholder deferred lighting from the G-buffer into scene.color (sun + point/spot lights, no shadows).
 #pragma once
 
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
@@ -6,20 +6,21 @@
 namespace ghost::graphics::rendergraph {
 class RenderGraph;
 }
+namespace ghost::graphics::scene {
+class GpuScene;
+}
 
 namespace ghost::graphics::passes {
 
-class BackgroundPass {
+class LightingPass {
 public:
     void initialize(shader::PipelineLibrary& pipelines);
-    // Adds the pass; it creates "scene.color" (RGBA16F, full resolution).
-    void addTo(rendergraph::RenderGraph& graph);
-    void setTime(float timeSeconds) { m_time = timeSeconds; }
+    // Reads the gbuffer.* textures, writes "scene.color" (RGBA16F, linear radiance in nits).
+    void addTo(rendergraph::RenderGraph& graph, const scene::GpuScene& scene);
 
 private:
     shader::PipelineLibrary* m_pipelines = nullptr;
     shader::PipelineHandle m_pipeline = shader::kInvalidPipeline;
-    float m_time = 0.0f;
 };
 
 } // namespace ghost::graphics::passes

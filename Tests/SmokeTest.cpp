@@ -1,14 +1,16 @@
 // Smoke test run by `run.bat test`: starts the engine with default settings, renders frames, resizes the window,
 // exercises shader hot reload (break a shader, check the error is reported and the old pipeline survives, fix it),
-// and fails on any logged error or any Vulkan validation error.
+// loads every scene, checks the GPU scene was filled, and fails on any logged error or any Vulkan validation error.
 #include "App/Engine.h"
 #include "Assets/AssetRegistry.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "DebugTools/FrameCapture.h"
+#include "Graphics/GpuScene/GpuScene.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
+#include "Sandbox/Player/FlyController.h"
 #include "World/Components/MeshRenderer.h"
 #include "World/World.h"
 
@@ -18,6 +20,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+
+#include <glm/geometric.hpp>
 
 namespace {
 
@@ -141,6 +145,10 @@ struct SceneCheck {
             if (renderers < 2 || engine.assets().modelCount() < 2) {
                 fail("the default scene did not load its models (" + std::to_string(renderers) + " mesh renderers)");
             }
+            const auto& scene = engine.renderer().gpuScene();
+            if (!scene.hasGeometry() || scene.models().size() < 2 || scene.instances().empty()) {
+                fail("the GPU scene has no geometry after the first frame (" + std::to_string(scene.instances().size()) + " instances)");
+            }
         } else if (frame == 90) {
             // Every shipped scene must load cleanly: Engine::loadScene logs problems as errors, which fails the test.
             for (const auto& entry : std::filesystem::directory_iterator(ghost::core::Paths::content() / "Scenes")) {
@@ -180,11 +188,32 @@ struct SceneCheck {
     }
 };
 
+// Player: holding W flies the camera forward (the key is injected the way the window delivers it).
+struct PlayerCheck {
+    glm::vec3 start{0.0f};
+    std::string failure = "never ran";
+
+    void step(ghost::app::Engine& engine, uint64_t frame) {
+        ghost::platform::Input& input = engine.window().input();
+        const int keyW = static_cast<int>(ghost::platform::Key::W);
+        if (frame == 210) {
+            start = engine.player().position();
+            input.onKey(keyW, true);
+        } else if (frame == 220) {
+            input.onKey(keyW, false);
+            const float moved = glm::dot(engine.player().position() - start, engine.player().forward());
+            failure = moved > 0.05f ? "" : "holding W did not move the camera forward";
+            std::printf("player: moved %.2f m forward in 10 frames\n", moved);
+        }
+    }
+};
+
 } // namespace
 
 int main() {
     HotReloadCheck hotReload;
     SceneCheck sceneCheck;
+    PlayerCheck playerCheck;
     std::filesystem::path capturePath;
     size_t passTimings = 0;
     ghost::app::EngineOptions options;
@@ -201,6 +230,7 @@ int main() {
         }
         hotReload.step(engine, frame);
         sceneCheck.step(engine, frame);
+        playerCheck.step(engine, frame);
         if (frame == 200) {
             // The last rendered image, kept for inspection: Build/SmokeTest/LastFrame.png.
             capturePath = ghost::core::Paths::build() / "SmokeTest" / "LastFrame.png";
@@ -234,15 +264,19 @@ int main() {
     const bool hotReloadOk = hotReload.phase == HotReloadCheck::Phase::Done;
     std::error_code ec;
     const bool captureOk = !capturePath.empty() && std::filesystem::file_size(capturePath, ec) > 1000;
-    const bool timingsOk = passTimings >= 3; // Background, Tonemap, UI
+    const bool timingsOk = passTimings >= 4; // GBuffer, Lighting, Tonemap, UI
     const bool scenesOk = sceneCheck.failures.empty() && sceneCheck.scenesLoaded >= 2;
+    const bool playerOk = playerCheck.failure.empty();
+    if (!playerOk) {
+        std::printf("player check FAILED: %s\n", playerCheck.failure.c_str());
+    }
     for (const std::string& failure : sceneCheck.failures) {
         std::printf("scene check FAILED: %s\n", failure.c_str());
     }
     std::printf("scenes: %zu shipped scene(s) loaded cleanly\n", sceneCheck.scenesLoaded);
     const int errors = ghost::core::Log::errorCount();
     const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk &&
-                        scenesOk;
+                        scenesOk && playerOk;
     std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, capture %s, GPU timers %zu passes, "
                 "engine exit code %d -> %s\n",
                 static_cast<unsigned long long>(frames), static_cast<unsigned long long>(kFramesToRun), errors,

@@ -6,10 +6,11 @@
 |---|---|---|
 | `Math` | `kPi`, `kTwoPi`, `kInvPi`, `linearToSrgb`, `srgbToLinear` | ✅ |
 | `Bindless` | `gTextures[]`, `gSamplers[]`, `gStorageImages[]`, sampler slot constants, `sampleTexture/sampleTextureLevel/loadTexture` | ✅ |
-| `Scene` | Geometry/material fetch, barycentrics, TLAS, lights, previous transforms | steps 6–7 |
+| `Scene` | Mirror of `GpuSceneTypes.h` (`Vertex`, `GpuMaterial`, `GpuInstance`, `GpuLight`, `FrameConstants` with typed buffer pointers), `equirectUv`, `reconstructWorldPosition`, `cameraRayDirection` | ✅ (TLAS + hit helpers: step 7) |
+| `Packing` | `octahedralEncode/Decode` (unit vectors in two SNORM values) | ✅ |
+| `GBuffer` | `GBufferIndices`, `Surface`, `loadSurface(frame, indices, pixel)`; documents the G-buffer layout | ✅ |
+| `Environment` | `environmentRadiance(frame, direction)` (HDRI or procedural daylight sky, × intensity, in nits), `environmentAverageRadiance(frame)` | ✅ |
 | `Random` | PCG RNG, blue noise lookup | step 9 |
-| `Packing` | Octahedral normals and other packing helpers | step 6 |
-| `GBuffer` | Decode the G-buffer into a surface struct | step 6 |
 
 > [!warning] Not here, on purpose
 > BRDF importance sampling, MIS, robust ray offsets, reservoirs. Those are techniques ([[08 RTG Technique Catalog]]).

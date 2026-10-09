@@ -38,7 +38,9 @@ tags: [spec, structure]
 **Exact edges among the middle row** (decided 2026-10-10, see [[12 Decisions Log]]):
 - `Graphics` → Core, Platform. **Never** World/EnTT, so techniques can't reach the ECS.
 - `Assets` → Core only. CPU-side data (meshes, images); no Vulkan.
-- `World` → Core, Assets, Graphics. Its `GpuSceneExtractionSystem` pushes plain data into `GpuScene`.
+- `World` → Core, Assets, Graphics/GpuScene. Its `GpuSceneExtractionSystem` pushes plain data into `GpuScene`.
+- `Graphics/GpuScene` → Core, Assets (CPU structs only), Graphics/Vulkan. The one Graphics module that sees Assets.
+- `Sandbox/Player` → Core, Platform.
 - `Physics` → World (M0b).
 - `UI` → Graphics, Platform · `DebugTools` → UI, Graphics · `App` → everything.
 

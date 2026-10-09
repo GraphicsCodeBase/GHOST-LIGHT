@@ -5,15 +5,19 @@
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "DebugTools/FrameCapture.h"
+#include "Graphics/GpuScene/GpuScene.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
+#include "Sandbox/Player/FlyController.h"
 #include "UI/ImGuiLayer.h"
 #include "UI/PerformanceOverlay.h"
 #include "UI/SceneErrorOverlay.h"
 #include "UI/ShaderErrorOverlay.h"
+#include "World/Systems/GpuSceneExtractionSystem.h"
 #include "World/World.h"
 
+#include <cmath>
 #include <cstdio>
 #include <format>
 #include <utility>
@@ -89,6 +93,8 @@ bool Engine::initialize() {
 
     m_assets = std::make_unique<assets::AssetRegistry>();
     m_world = std::make_unique<world::World>();
+    m_extraction = std::make_unique<world::GpuSceneExtractionSystem>();
+    m_player = std::make_unique<sandbox::FlyController>();
     std::string scene = m_options.scene;
     if (scene.empty()) {
         scene = (m_options.useUserSettings && !m_settings.lastScene.empty()) ? m_settings.lastScene : kDefaultScene;
@@ -126,9 +132,11 @@ int Engine::run() {
             reportSceneResult(reload, m_world->currentScene());
         }
         m_world->update();
+        m_player->update(*m_window, static_cast<float>(m_timer.deltaSeconds()), m_settings.cameraSpeed);
+        updateGpuScene();
 
         drawUi();
-        m_renderer->renderFrame(m_timer.elapsedSeconds(), [this](VkCommandBuffer cmd) { m_ui->record(cmd); });
+        m_renderer->renderFrame([this](VkCommandBuffer cmd) { m_ui->record(cmd); });
 
         ++m_framesRun;
         if (m_options.maxFrames != 0 && m_framesRun >= m_options.maxFrames) {
@@ -162,10 +170,36 @@ void Engine::drawUi() {
 bool Engine::loadScene(const std::string& contentPath) {
     const world::SceneLoadResult result = m_world->loadScene(contentPath, *m_assets);
     reportSceneResult(result, contentPath);
-    if (result.loaded && m_options.useUserSettings) {
-        m_settings.lastScene = contentPath;
+    if (result.loaded) {
+        placePlayerAtStart();
+        if (m_options.useUserSettings) {
+            m_settings.lastScene = contentPath;
+        }
     }
     return result.loaded;
+}
+
+void Engine::placePlayerAtStart() {
+    const world::SceneSettings& settings = m_world->settings();
+    const world::CameraBookmark* start = settings.findBookmark(settings.playerStart);
+    if (!start && !settings.bookmarks.empty()) {
+        start = &settings.bookmarks.front();
+    }
+    if (start) {
+        m_player->teleport(start->position, start->yawDeg, start->pitchDeg);
+    } else {
+        m_player->teleport({0.0f, 1.7f, 5.0f}, 0.0f, 0.0f);
+    }
+    m_resetCameraHistory = true;
+}
+
+void Engine::updateGpuScene() {
+    graphics::scene::GpuScene& scene = m_renderer->gpuScene();
+    m_extraction->update(m_world->registry(), m_world->settings(), *m_assets, scene);
+    scene.setCamera({m_player->position(), m_player->forward(), m_player->fovYDeg, m_player->nearPlane}, m_resetCameraHistory);
+    m_resetCameraHistory = false;
+    // Physical camera exposure from EV100 (ISO 100, saturation-based sensitivity): 1 / (1.2 * 2^EV100).
+    scene.setExposure(1.0f / (1.2f * std::exp2(m_world->settings().exposureEv100)));
 }
 
 void Engine::reportSceneResult(const world::SceneLoadResult& result, const std::string& contentPath) {

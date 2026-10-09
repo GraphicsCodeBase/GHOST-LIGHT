@@ -4,7 +4,6 @@
 #include "Core/Paths.h"
 #include "Graphics/RenderGraph/RenderGraph.h"
 
-#include <cmath>
 #include <memory>
 
 namespace ghost::graphics::passes {
@@ -43,7 +42,7 @@ void TonemapPass::addTo(rendergraph::RenderGraph& graph, const std::string& outp
                 return;
             }
             ctx.bindPipeline(pipeline);
-            ctx.pushConstants(TonemapConstants{ctx.sampledIndex(*input), std::exp2(exposureEv)});
+            ctx.pushConstants(TonemapConstants{ctx.sampledIndex(*input), exposure});
             ctx.drawFullscreenTriangle();
         });
 }

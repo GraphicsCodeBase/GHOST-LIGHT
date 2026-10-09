@@ -19,7 +19,7 @@ public:
     // Reads "scene.color", writes `output` (an external texture, normally "swapchain").
     void addTo(rendergraph::RenderGraph& graph, const std::string& output);
 
-    float exposureEv = 0.0f; // exposure in stops; 0 = no change
+    float exposure = 1.0f; // linear multiplier applied before the curve (the Renderer sets it from the scene's EV100)
 
 private:
     shader::PipelineLibrary* m_pipelines = nullptr;

@@ -1,9 +1,12 @@
-// Renderer startup/shutdown order and the per-frame cycle: hot reload -> acquire -> render graph -> submit -> present.
+// Renderer startup/shutdown order and the per-frame cycle: hot reload -> acquire -> GPU scene upload -> render graph ->
+// submit -> present.
 #include "Graphics/Renderer/Renderer.h"
 
 #include "Core/Log.h"
 #include "Core/Paths.h"
-#include "Graphics/Passes/BackgroundPass.h"
+#include "Graphics/GpuScene/GpuScene.h"
+#include "Graphics/Passes/GBufferPass.h"
+#include "Graphics/Passes/LightingPass.h"
 #include "Graphics/Passes/TonemapPass.h"
 #include "Graphics/RenderGraph/GpuTimers.h"
 #include "Graphics/RenderGraph/RenderGraph.h"
@@ -76,8 +79,12 @@ bool Renderer::initialize(platform::Window& window, const Desc& desc) {
     m_timers = std::make_unique<rendergraph::GpuTimers>();
     m_timers->create(*m_device, vulkan::FrameScheduler::kFramesInFlight);
 
-    m_background = std::make_unique<passes::BackgroundPass>();
-    m_background->initialize(*m_pipelines);
+    m_gpuScene = std::make_unique<scene::GpuScene>();
+    m_gpuScene->initialize(*m_device, *m_bindless, *m_deletionQueue);
+    m_gbuffer = std::make_unique<passes::GBufferPass>();
+    m_gbuffer->initialize(*m_pipelines);
+    m_lighting = std::make_unique<passes::LightingPass>();
+    m_lighting->initialize(*m_pipelines);
     m_tonemap = std::make_unique<passes::TonemapPass>();
     m_tonemap->initialize(*m_pipelines, m_swapchain->format());
     buildRenderGraph();
@@ -90,7 +97,8 @@ void Renderer::buildRenderGraph() {
     rendergraph::RenderGraph& graph = *m_graph;
     graph.reset();
     graph.declareExternal(kSwapchain, m_swapchain->format());
-    m_background->addTo(graph);
+    m_gbuffer->addTo(graph, *m_gpuScene);
+    m_lighting->addTo(graph, *m_gpuScene);
     m_tonemap->addTo(graph, kSwapchain);
     graph.addPass(
         "UI", rendergraph::PassKind::Raster,
@@ -119,9 +127,11 @@ void Renderer::shutdown() {
     deliverCaptureIfReady(/*gpuIdle*/ true);
     // Reverse creation order: everything that lives on the device goes before the device, the surface before the instance.
     m_tonemap.reset();
-    m_background.reset();
+    m_lighting.reset();
+    m_gbuffer.reset();
     m_timers.reset();
     m_graph.reset();
+    m_gpuScene.reset(); // its retired buffers/textures sit in the deletion queue, flushed below
     m_captureBuffer.reset();
     m_pipelines.reset();
     m_shaderCompiler.reset();
@@ -189,7 +199,7 @@ void Renderer::deliverCaptureIfReady(bool gpuIdle) {
     m_capturePending = nullptr;
 }
 
-void Renderer::renderFrame(double timeSeconds, const OverlayRecorder& overlay) {
+void Renderer::renderFrame(const OverlayRecorder& overlay) {
     if (!m_initialized) {
         return;
     }
@@ -211,10 +221,13 @@ void Renderer::renderFrame(double timeSeconds, const OverlayRecorder& overlay) {
     }
 
     const VkExtent2D extent = m_swapchain->extent();
+    // This slot's previous frame has finished, so its per-frame scene buffers can be rewritten.
+    const uint64_t thisFrame = m_frames->frameNumber() + 1; // the timeline value this submit will signal
+    m_gpuScene->prepareFrame(m_frames->slot(), thisFrame, extent, thisFrame);
+    m_tonemap->exposure = m_gpuScene->exposure();
     m_graph->compile(extent, m_frames->frameNumber());
     m_graph->bindExternal(kSwapchain, m_swapchain->image(imageIndex), m_swapchain->view(imageIndex), extent, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     m_overlay = overlay;
-    m_background->setTime(static_cast<float>(timeSeconds));
 
     const bool capture = m_captureRequest && !m_capturePending;
     if (capture) {
@@ -227,13 +240,13 @@ void Renderer::renderFrame(double timeSeconds, const OverlayRecorder& overlay) {
         m_graph->setPassEnabled("Capture", true);
     }
 
-    m_graph->execute(cmd, m_frames->frameNumber() + 1, m_timers.get());
+    m_graph->execute(cmd, thisFrame, m_timers.get());
 
     if (capture) {
         m_graph->setPassEnabled("Capture", false);
         m_capturePending = std::move(m_captureRequest);
         m_captureRequest = nullptr;
-        m_captureFrame = m_frames->frameNumber() + 1; // the timeline value this submit will signal
+        m_captureFrame = thisFrame;
     }
     m_overlay = nullptr;
 

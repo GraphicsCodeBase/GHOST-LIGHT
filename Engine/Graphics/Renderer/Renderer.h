@@ -1,5 +1,5 @@
-// Frame orchestration: owns the Vulkan context, swapchain, shaders, render graph and passes; records and submits each
-// frame. App calls it once per frame.
+// Frame orchestration: owns the Vulkan context, swapchain, shaders, GPU scene, render graph and passes; records and
+// submits each frame. App calls it once per frame.
 #pragma once
 
 #include <cstdint>
@@ -35,8 +35,13 @@ class RenderGraph;
 class GpuTimers;
 } // namespace ghost::graphics::rendergraph
 
+namespace ghost::graphics::scene {
+class GpuScene;
+}
+
 namespace ghost::graphics::passes {
-class BackgroundPass;
+class GBufferPass;
+class LightingPass;
 class TonemapPass;
 } // namespace ghost::graphics::passes
 
@@ -68,8 +73,9 @@ public:
     void shutdown();
     void waitIdle() const;
 
-    // Renders and presents one frame. Handles minimized windows, resizes and shader hot reload on its own.
-    void renderFrame(double timeSeconds, const OverlayRecorder& overlay = {});
+    // Renders and presents one frame of the GPU scene as last filled (gpuScene()). Handles minimized windows, resizes
+    // and shader hot reload on its own.
+    void renderFrame(const OverlayRecorder& overlay = {});
     // Captures the next rendered frame (UI included); the callback runs once the GPU has finished it.
     void requestCapture(CaptureCallback callback);
 
@@ -85,6 +91,7 @@ public:
     uint32_t swapchainImageCount() const;
     shader::PipelineLibrary& pipelines() { return *m_pipelines; }
     rendergraph::RenderGraph& renderGraph() { return *m_graph; }
+    scene::GpuScene& gpuScene() { return *m_gpuScene; }
 
 private:
     bool syncSwapchainWithWindow();
@@ -104,7 +111,9 @@ private:
     std::unique_ptr<shader::PipelineLibrary> m_pipelines;
     std::unique_ptr<rendergraph::RenderGraph> m_graph;
     std::unique_ptr<rendergraph::GpuTimers> m_timers;
-    std::unique_ptr<passes::BackgroundPass> m_background;
+    std::unique_ptr<scene::GpuScene> m_gpuScene;
+    std::unique_ptr<passes::GBufferPass> m_gbuffer;
+    std::unique_ptr<passes::LightingPass> m_lighting;
     std::unique_ptr<passes::TonemapPass> m_tonemap;
 
     OverlayRecorder m_overlay;
