@@ -68,5 +68,9 @@ tags: [decisions]
 | 2026-10-10 | Hot reload polls shader files **4×/s**; a broken edit keeps the last working pipeline and shows the error overlay; broken at startup = logged error | "Engine never gets in my way" guarantee #1, and `run.bat test` still catches shipped breakage |
 | 2026-10-10 | Smoke test **breaks and fixes a real shader file** in `Build/SmokeTest/` and checks error location, last-good pipeline and recovery | The hot-reload acceptance criterion is verified on every `run.bat test`, not just by hand |
 | 2026-10-10 | ImGui layout lives in **`User/imgui.ini`**; UI uses GLFW privately (ImGui input backend) | Machine-specific state stays in `User/` |
+| 2026-10-10 | Render graph **keeps textures across `reset()`** when name + description match; every graph texture gets `SAMPLED` usage | Toggling techniques doesn't reallocate; the texture viewer can show anything |
+| 2026-10-10 | Barrier model: per physical image track layout, last write and reads-since-write; transient images keep stage masks across frames so frame N+1 waits for frame N's use (no per-frame copies) | Correct with 2 frames in flight, minimal memory, passes sync validation |
+| 2026-10-10 | Screenshots (F12) via a **built-in uncompressed PNG writer**; the smoke test saves `Build/SmokeTest/LastFrame.png` | No extra dependency for M0a; lets every run be inspected visually |
+| 2026-10-10 | Placeholder tonemap = exposure + **ACES fit (Narkowicz)** + sRGB encode | Standard and simple; better tonemapping/exposure is an M7 topic |
 
 See also: [[13 Open Questions]]

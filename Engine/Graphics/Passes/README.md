@@ -4,8 +4,11 @@
 
 | Pass | What it does | Status |
 |---|---|---|
-| `SplashPass` | Placeholder: full-screen ghost-light glow until real frames exist | step 3 (replaced in step 4) |
-| G-buffer, lighting, tonemap, reference path tracer | Raster G-buffer with motion vectors + entity ID, placeholder sun light, tonemap to the swapchain, naive path tracer | steps 4–7 |
+| `BackgroundPass` | Compute: procedural HDR sky + ghost-light bulb into `scene.color` (fallback background when a scene has no HDRI) | ✅ |
+| `TonemapPass` | Raster: `scene.color` → exposure → ACES fit → sRGB into the swapchain | ✅ |
+| G-buffer, lighting, reference path tracer | Raster G-buffer with motion vectors + entity ID, placeholder sun light, naive path tracer | steps 6–7 |
+
+Passes add themselves with `pass.addTo(graph)`; the UI and frame-capture passes are added by the Renderer.
 
 **Depends on:** Core, Graphics/Vulkan, Graphics/ShaderCompiler.
 **Not responsible for:** technique code (Techniques/), frame orchestration (Renderer), resource barriers (RenderGraph).

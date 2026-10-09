@@ -11,7 +11,7 @@ can't reach the ECS even by accident.
 | [Vulkan](Vulkan/README.md) | Instance, device, swapchain, frames in flight, memory, debug names, GPU crash reports | M0a step 2 ✅ |
 | [Renderer](Renderer/README.md) | Per-frame orchestration: acquire → record → submit → present | M0a step 2 ✅ |
 | [ShaderCompiler](ShaderCompiler/README.md) | Slang → SPIR-V, pipelines, hot reload, error overlay data | M0a step 3 ✅ |
-| RenderGraph | Passes, transient/persistent/history resources, automatic barriers | M0a step 4 |
+| [RenderGraph](RenderGraph/README.md) | Passes, transient/persistent/history resources, automatic barriers, GPU timers | M0a step 4 ✅ |
 | GpuScene | ECS → GPU buffers, TLAS instances, previous transforms | M0a step 6 |
 | RayTracing | BLAS/TLAS, shader binding table, RT pipelines | M0a step 7 |
 | [Passes](Passes/README.md) | G-buffer, lighting, tonemap, reference path tracer (splash placeholder for now) | M0a steps 3–7 |

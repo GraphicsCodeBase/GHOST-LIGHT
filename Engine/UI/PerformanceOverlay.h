@@ -2,6 +2,8 @@
 #pragma once
 
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ghost::ui {
 
@@ -13,6 +15,8 @@ public:
         bool validation = false;
         int width = 0;
         int height = 0;
+        double gpuMilliseconds = 0.0;                              // whole frame on the GPU
+        std::vector<std::pair<std::string, double>> passTimings;   // render graph pass -> ms
     };
     static void draw(const Stats& stats);
 };

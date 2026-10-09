@@ -174,6 +174,13 @@ CompileResult ShaderCompiler::compile(std::span<const ShaderEntryPoint> entryPoi
         entry.value.intValue0 = 1;
         options.push_back(entry);
     }
+    {
+        // Bindless storage images (RWTexture2D<float4>) must work for any image format (RGBA16F, R32F, ...).
+        slang::CompilerOptionEntry entry{};
+        entry.name = slang::CompilerOptionName::DefaultImageFormatUnknown;
+        entry.value.intValue0 = 1;
+        options.push_back(entry);
+    }
 #ifdef GHOST_DEBUG
     {
         // Source-level shader debugging in Nsight / RenderDoc.

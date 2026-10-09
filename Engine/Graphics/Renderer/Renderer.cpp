@@ -1,17 +1,19 @@
-// Renderer startup/shutdown order and the per-frame cycle: hot reload -> acquire -> record -> submit -> present.
+// Renderer startup/shutdown order and the per-frame cycle: hot reload -> acquire -> render graph -> submit -> present.
 #include "Graphics/Renderer/Renderer.h"
 
 #include "Core/Log.h"
 #include "Core/Paths.h"
-#include "Graphics/Passes/SplashPass.h"
+#include "Graphics/Passes/BackgroundPass.h"
+#include "Graphics/Passes/TonemapPass.h"
+#include "Graphics/RenderGraph/GpuTimers.h"
+#include "Graphics/RenderGraph/RenderGraph.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Graphics/ShaderCompiler/ShaderCompiler.h"
 #include "Graphics/Vulkan/BindlessDescriptors.h"
-#include "Graphics/Vulkan/DebugUtils.h"
 #include "Graphics/Vulkan/DeletionQueue.h"
 #include "Graphics/Vulkan/Device.h"
 #include "Graphics/Vulkan/FrameScheduler.h"
-#include "Graphics/Vulkan/GpuCrashReporter.h"
+#include "Graphics/Vulkan/GpuBuffer.h"
 #include "Graphics/Vulkan/Instance.h"
 #include "Graphics/Vulkan/Surface.h"
 #include "Graphics/Vulkan/Swapchain.h"
@@ -21,24 +23,7 @@ namespace ghost::graphics {
 
 namespace {
 
-void imageBarrier(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout,
-                  VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess, VkPipelineStageFlags2 dstStage, VkAccessFlags2 dstAccess) {
-    VkImageMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
-    barrier.srcStageMask = srcStage;
-    barrier.srcAccessMask = srcAccess;
-    barrier.dstStageMask = dstStage;
-    barrier.dstAccessMask = dstAccess;
-    barrier.oldLayout = oldLayout;
-    barrier.newLayout = newLayout;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = image;
-    barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-    VkDependencyInfo dependency{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
-    dependency.imageMemoryBarrierCount = 1;
-    dependency.pImageMemoryBarriers = &barrier;
-    vkCmdPipelineBarrier2(cmd, &dependency);
-}
+constexpr const char* kSwapchain = "swapchain";
 
 } // namespace
 
@@ -86,11 +71,41 @@ bool Renderer::initialize(platform::Window& window, const Desc& desc) {
     m_pipelines = std::make_unique<shader::PipelineLibrary>();
     m_pipelines->initialize(*m_device, *m_bindless, *m_deletionQueue, *m_shaderCompiler);
 
-    m_splash = std::make_unique<passes::SplashPass>();
-    m_splash->initialize(*m_pipelines, m_swapchain->format());
+    m_graph = std::make_unique<rendergraph::RenderGraph>();
+    m_graph->initialize(*m_device, *m_bindless, *m_deletionQueue);
+    m_timers = std::make_unique<rendergraph::GpuTimers>();
+    m_timers->create(*m_device, vulkan::FrameScheduler::kFramesInFlight);
+
+    m_background = std::make_unique<passes::BackgroundPass>();
+    m_background->initialize(*m_pipelines);
+    m_tonemap = std::make_unique<passes::TonemapPass>();
+    m_tonemap->initialize(*m_pipelines, m_swapchain->format());
+    buildRenderGraph();
 
     m_initialized = true;
     return true;
+}
+
+void Renderer::buildRenderGraph() {
+    rendergraph::RenderGraph& graph = *m_graph;
+    graph.reset();
+    graph.declareExternal(kSwapchain, m_swapchain->format());
+    m_background->addTo(graph);
+    m_tonemap->addTo(graph, kSwapchain);
+    graph.addPass(
+        "UI", rendergraph::PassKind::Raster,
+        [](rendergraph::PassBuilder& builder) { builder.colorAttachment(kSwapchain, rendergraph::LoadOp::Load); },
+        [this](rendergraph::PassContext& ctx) {
+            if (m_overlay) {
+                m_overlay(ctx.cmd());
+            }
+        });
+    auto source = std::make_shared<rendergraph::TextureHandle>();
+    graph.addPass(
+        "Capture", rendergraph::PassKind::Transfer,
+        [source](rendergraph::PassBuilder& builder) { *source = builder.copySource(kSwapchain); },
+        [this, source](rendergraph::PassContext& ctx) { recordCapture(ctx.cmd(), ctx.image(*source)); });
+    graph.setPassEnabled("Capture", false);
 }
 
 void Renderer::waitIdle() const {
@@ -101,8 +116,13 @@ void Renderer::waitIdle() const {
 
 void Renderer::shutdown() {
     waitIdle();
+    deliverCaptureIfReady(/*gpuIdle*/ true);
     // Reverse creation order: everything that lives on the device goes before the device, the surface before the instance.
-    m_splash.reset();
+    m_tonemap.reset();
+    m_background.reset();
+    m_timers.reset();
+    m_graph.reset();
+    m_captureBuffer.reset();
     m_pipelines.reset();
     m_shaderCompiler.reset();
     if (m_deletionQueue) {
@@ -135,18 +155,54 @@ bool Renderer::syncSwapchainWithWindow() {
     return true;
 }
 
+void Renderer::requestCapture(CaptureCallback callback) {
+    m_captureRequest = std::move(callback);
+}
+
+void Renderer::recordCapture(VkCommandBuffer cmd, VkImage image) {
+    VkBufferImageCopy region{};
+    region.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    region.imageExtent = {m_captureExtent.width, m_captureExtent.height, 1};
+    vkCmdCopyImageToBuffer(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_captureBuffer->handle(), 1, &region);
+
+    // Make the copy visible to the CPU once the frame's timeline value is reached.
+    VkMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER_2};
+    barrier.srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT;
+    barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    barrier.dstStageMask = VK_PIPELINE_STAGE_2_HOST_BIT;
+    barrier.dstAccessMask = VK_ACCESS_2_HOST_READ_BIT;
+    VkDependencyInfo dependency{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+    dependency.memoryBarrierCount = 1;
+    dependency.pMemoryBarriers = &barrier;
+    vkCmdPipelineBarrier2(cmd, &dependency);
+}
+
+void Renderer::deliverCaptureIfReady(bool gpuIdle) {
+    if (!m_capturePending || !m_frames) {
+        return;
+    }
+    if (!gpuIdle && m_frames->completedFrame() < m_captureFrame) {
+        return;
+    }
+    m_captureBuffer->invalidate();
+    m_capturePending(m_captureExtent.width, m_captureExtent.height, static_cast<const uint8_t*>(m_captureBuffer->mapped()));
+    m_capturePending = nullptr;
+}
+
 void Renderer::renderFrame(double timeSeconds, const OverlayRecorder& overlay) {
     if (!m_initialized) {
         return;
     }
     // Retire objects the GPU is done with, then pick up edited shaders (replacements retire after the last submitted frame).
     m_deletionQueue->flush(m_frames->completedFrame());
+    deliverCaptureIfReady(false);
     m_pipelines->update(m_frames->frameNumber());
     if (!syncSwapchainWithWindow()) {
         return;
     }
 
     VkCommandBuffer cmd = m_frames->beginFrame();
+    m_timers->beginFrame(m_frames->slot()); // this slot's previous frame is done: its timings are ready
     uint32_t imageIndex = 0;
     if (!m_swapchain->acquire(m_frames->imageAvailable(), imageIndex)) {
         m_frames->cancelFrame();
@@ -154,36 +210,32 @@ void Renderer::renderFrame(double timeSeconds, const OverlayRecorder& overlay) {
         return;
     }
 
-    const VkImage image = m_swapchain->image(imageIndex);
     const VkExtent2D extent = m_swapchain->extent();
-    imageBarrier(cmd, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-                 VK_ACCESS_2_NONE, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+    m_graph->compile(extent, m_frames->frameNumber());
+    m_graph->bindExternal(kSwapchain, m_swapchain->image(imageIndex), m_swapchain->view(imageIndex), extent, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    m_overlay = overlay;
+    m_background->setTime(static_cast<float>(timeSeconds));
 
-    VkRenderingAttachmentInfo colorAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
-    colorAttachment.imageView = m_swapchain->view(imageIndex);
-    colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-    VkRenderingInfo rendering{VK_STRUCTURE_TYPE_RENDERING_INFO};
-    rendering.renderArea = {{0, 0}, extent};
-    rendering.layerCount = 1;
-    rendering.colorAttachmentCount = 1;
-    rendering.pColorAttachments = &colorAttachment;
-
-    vulkan::DebugUtils::beginLabel(cmd, "Splash + UI");
-    vulkan::GpuCrashReporter::checkpoint(cmd, "Splash + UI");
-    vkCmdBeginRendering(cmd, &rendering);
-    m_bindless->bind(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS);
-    m_splash->record(cmd, extent, static_cast<float>(timeSeconds));
-    if (overlay) {
-        overlay(cmd);
+    const bool capture = m_captureRequest && !m_capturePending;
+    if (capture) {
+        const VkDeviceSize bytes = static_cast<VkDeviceSize>(extent.width) * extent.height * 4;
+        if (!m_captureBuffer || m_captureBuffer->size() < bytes) {
+            m_captureBuffer = std::make_unique<vulkan::GpuBuffer>();
+            m_captureBuffer->create(*m_device, {bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT, vulkan::GpuBuffer::Memory::Readback, "FrameCapture"});
+        }
+        m_captureExtent = extent;
+        m_graph->setPassEnabled("Capture", true);
     }
-    vkCmdEndRendering(cmd);
-    vulkan::DebugUtils::endLabel(cmd);
 
-    imageBarrier(cmd, image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-                 VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_NONE, VK_ACCESS_2_NONE);
+    m_graph->execute(cmd, m_frames->frameNumber() + 1, m_timers.get());
+
+    if (capture) {
+        m_graph->setPassEnabled("Capture", false);
+        m_capturePending = std::move(m_captureRequest);
+        m_captureRequest = nullptr;
+        m_captureFrame = m_frames->frameNumber() + 1; // the timeline value this submit will signal
+    }
+    m_overlay = nullptr;
 
     m_frames->submit(m_frames->imageAvailable(), m_swapchain->renderFinished(imageIndex));
     if (!m_swapchain->present(m_device->graphicsQueue(), imageIndex)) {
@@ -197,6 +249,20 @@ bool Renderer::validationActive() const {
 
 std::string Renderer::gpuName() const {
     return m_device ? m_device->name() : std::string();
+}
+
+std::vector<Renderer::PassTiming> Renderer::gpuTimings() const {
+    std::vector<PassTiming> timings;
+    if (m_timers) {
+        for (const auto& timing : m_timers->results()) {
+            timings.push_back({timing.name, timing.milliseconds});
+        }
+    }
+    return timings;
+}
+
+double Renderer::gpuFrameMilliseconds() const {
+    return m_timers ? m_timers->totalMilliseconds() : 0.0;
 }
 
 VkFormat Renderer::swapchainFormat() const {

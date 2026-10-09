@@ -18,6 +18,13 @@ void PerformanceOverlay::draw(const Stats& stats) {
         if (stats.validation) {
             ImGui::TextColored(ImVec4(1.0f, 0.75f, 0.3f, 1.0f), "Vulkan validation ON (slower)");
         }
+        if (!stats.passTimings.empty()) {
+            ImGui::Separator();
+            ImGui::Text("GPU %.3f ms", stats.gpuMilliseconds);
+            for (const auto& [name, ms] : stats.passTimings) {
+                ImGui::Text("  %-12s %7.3f ms", name.c_str(), ms);
+            }
+        }
     }
     ImGui::End();
 }

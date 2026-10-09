@@ -4,6 +4,7 @@
 #include "App/Engine.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
+#include "DebugTools/FrameCapture.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
@@ -117,12 +118,14 @@ struct HotReloadCheck {
 
 int main() {
     HotReloadCheck hotReload;
+    std::filesystem::path capturePath;
+    size_t passTimings = 0;
     ghost::app::EngineOptions options;
     options.maxFrames = kFramesToRun;
     options.useUserSettings = false;
     options.logFileName = "SmokeTest.log";
     options.windowTitle = "GHOST LIGHT smoke test";
-    options.onFrame = [&hotReload](ghost::app::Engine& engine, uint64_t frame) {
+    options.onFrame = [&](ghost::app::Engine& engine, uint64_t frame) {
         // Resizing twice forces swapchain recreation while frames are in flight.
         if (frame == 15) {
             engine.window().setSize(1280, 720);
@@ -130,6 +133,16 @@ int main() {
             engine.window().setSize(1600, 900);
         }
         hotReload.step(engine, frame);
+        if (frame == 200) {
+            // The last rendered image, kept for inspection: Build/SmokeTest/LastFrame.png.
+            capturePath = ghost::core::Paths::build() / "SmokeTest" / "LastFrame.png";
+            std::error_code ec;
+            std::filesystem::remove(capturePath, ec);
+            ghost::debugtools::FrameCapture::requestPng(engine.renderer(), capturePath);
+        }
+        if (frame == kFramesToRun - 1) {
+            passTimings = engine.renderer().gpuTimings().size();
+        }
     };
 
     int exitCode = 1;
@@ -151,12 +164,16 @@ int main() {
     const bool validationOk = true;
 #endif
     const bool hotReloadOk = hotReload.phase == HotReloadCheck::Phase::Done;
+    std::error_code ec;
+    const bool captureOk = !capturePath.empty() && std::filesystem::file_size(capturePath, ec) > 1000;
+    const bool timingsOk = passTimings >= 3; // Background, Tonemap, UI
     const int errors = ghost::core::Log::errorCount();
-    const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk;
-    std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, engine exit code %d -> %s\n",
+    const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk;
+    std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, capture %s, GPU timers %zu passes, "
+                "engine exit code %d -> %s\n",
                 static_cast<unsigned long long>(frames), static_cast<unsigned long long>(kFramesToRun), errors,
-                validation ? "on" : "OFF", hotReloadOk ? "ok" : ("FAILED: " + hotReload.failure).c_str(), exitCode,
-                passed ? "PASS" : "FAIL");
+                validation ? "on" : "OFF", hotReloadOk ? "ok" : ("FAILED: " + hotReload.failure).c_str(), captureOk ? "ok" : "MISSING",
+                passTimings, exitCode, passed ? "PASS" : "FAIL");
     if (!validationOk) {
         std::printf("Validation layers did not load in a Debug build: run run.bat so it installs them into .tools/.\n");
     }

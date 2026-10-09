@@ -5,7 +5,7 @@
 | Module | Provides | Status |
 |---|---|---|
 | `Math` | `kPi`, `kTwoPi`, `kInvPi`, `linearToSrgb`, `srgbToLinear` | ✅ |
-| `Bindless` | The global descriptor arrays (textures, samplers, storage images) and sampler indices | step 4 |
+| `Bindless` | `gTextures[]`, `gSamplers[]`, `gStorageImages[]`, sampler slot constants, `sampleTexture/sampleTextureLevel/loadTexture` | ✅ |
 | `Scene` | Geometry/material fetch, barycentrics, TLAS, lights, previous transforms | steps 6–7 |
 | `Random` | PCG RNG, blue noise lookup | step 9 |
 | `Packing` | Octahedral normals and other packing helpers | step 6 |

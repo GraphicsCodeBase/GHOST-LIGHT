@@ -3,6 +3,7 @@
 
 #include "Core/Log.h"
 #include "Core/Paths.h"
+#include "DebugTools/FrameCapture.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
@@ -125,6 +126,10 @@ void Engine::drawUi() {
     const glm::ivec2 size = m_window->framebufferSize();
     stats.width = size.x;
     stats.height = size.y;
+    stats.gpuMilliseconds = m_renderer->gpuFrameMilliseconds();
+    for (const auto& timing : m_renderer->gpuTimings()) {
+        stats.passTimings.emplace_back(timing.name, timing.milliseconds);
+    }
     ui::PerformanceOverlay::draw(stats);
     ui::ShaderErrorOverlay::draw(m_renderer->pipelines().errors());
     m_ui->endFrame();
@@ -138,6 +143,9 @@ void Engine::handleGlobalShortcuts() {
     const platform::Input& input = m_window->input();
     if (input.wasPressed(platform::Key::F11)) {
         m_window->toggleFullscreen();
+    }
+    if (input.wasPressed(platform::Key::F12)) {
+        debugtools::FrameCapture::requestPng(*m_renderer, debugtools::FrameCapture::defaultPath());
     }
 }
 

@@ -14,13 +14,13 @@ tags: [roadmap]
 
 ### Checklist
 - [ ] Folder structure exactly per [[14 Project Structure]], module READMEs, per-module CMake targets
-- [ ] `run.bat` (`release`, `test`, `clean`), bootstrap into `.tools/`, clear error messages ([[15 Setup and Portability]])
+- [x] `run.bat` (`release`, `test`, `clean`), bootstrap into `.tools/`, clear error messages ([[15 Setup and Portability]])
 - [ ] `new_technique.bat` + `Techniques/_Template/`
-- [ ] Root-relative path system (`Core`), `User/settings.json` auto-created
-- [ ] Window, input, fly camera
-- [ ] Vulkan 1.3 via volk, RT extensions, validation layers from `.tools/`, debug names
-- [ ] VMA, frames in flight, timeline sync
-- [ ] Render graph (transient / persistent / history, auto barriers)
+- [x] Root-relative path system (`Core`), `User/settings.json` auto-created
+- [ ] Window, input, fly camera (window + input ✅, fly camera in step 6)
+- [x] Vulkan 1.3 via volk, RT extensions, validation layers from `.tools/`, debug names
+- [x] VMA, frames in flight, timeline sync
+- [x] Render graph (transient / persistent / history, auto barriers)
 - [ ] EnTT world + core components (`Transform`, `Name`, `MeshRenderer`, lights, `Camera`)
 - [ ] JSON **scene loading** (entities, prefabs, lights, environment, technique settings)
 - [ ] glTF loading → asset registry → GPU scene extraction from ECS
@@ -30,7 +30,7 @@ tags: [roadmap]
 - [ ] Naive reference path tracer with accumulation (`RTG-TODO` stubs)
 - [ ] Technique API, auto-registration, auto ImGui params
 - [ ] Example technique (not RTG): "visualize normals via ray query"
-- [ ] Slang hot-reload + **error overlay** (last good shader keeps running)
+- [x] Slang hot-reload + **error overlay** (last good shader keeps running)
 - [ ] GPU timers per pass, texture viewer
 - [ ] Asset manifest + starter assets ([[09 Assets#Starter set]])
 - [ ] Blue noise textures in `ShaderLibrary`

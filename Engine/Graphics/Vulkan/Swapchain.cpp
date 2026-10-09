@@ -36,7 +36,7 @@ bool Swapchain::build(uint32_t width, uint32_t height, VkSwapchainKHR oldSwapcha
     // UNORM, not SRGB: the tonemap pass writes display-encoded values itself, and ImGui's colors are already sRGB.
     builder.set_desired_format({VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
         .set_desired_extent(width, height)
-        .set_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+        .set_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
         .set_old_swapchain(oldSwapchain);
     if (m_vsync) {
         builder.set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR);
