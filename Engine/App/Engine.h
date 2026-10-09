@@ -14,6 +14,9 @@ class Window;
 namespace ghost::graphics {
 class Renderer;
 }
+namespace ghost::ui {
+class ImGuiLayer;
+}
 
 namespace ghost::app {
 
@@ -31,12 +34,14 @@ public:
 
     uint64_t framesRun() const { return m_framesRun; }
     platform::Window& window() { return *m_window; }
+    graphics::Renderer& renderer() { return *m_renderer; }
     // True when the Vulkan validation layers are loaded and reporting into the log.
     bool validationActive() const;
 
 private:
     void handleGlobalShortcuts();
     void updateWindowTitle();
+    void drawUi();
     void saveUserSettings();
 
     EngineOptions m_options;
@@ -44,6 +49,7 @@ private:
     core::FrameTimer m_timer;
     std::unique_ptr<platform::Window> m_window;
     std::unique_ptr<graphics::Renderer> m_renderer;
+    std::unique_ptr<ui::ImGuiLayer> m_ui;
     uint64_t m_framesRun = 0;
     double m_titleRefreshSeconds = 0.0;
     bool m_initialized = false;

@@ -1,8 +1,14 @@
-// Renderer startup/shutdown order and the per-frame acquire -> record -> submit -> present cycle.
+// Renderer startup/shutdown order and the per-frame cycle: hot reload -> acquire -> record -> submit -> present.
 #include "Graphics/Renderer/Renderer.h"
 
 #include "Core/Log.h"
+#include "Core/Paths.h"
+#include "Graphics/Passes/SplashPass.h"
+#include "Graphics/ShaderCompiler/PipelineLibrary.h"
+#include "Graphics/ShaderCompiler/ShaderCompiler.h"
+#include "Graphics/Vulkan/BindlessDescriptors.h"
 #include "Graphics/Vulkan/DebugUtils.h"
+#include "Graphics/Vulkan/DeletionQueue.h"
 #include "Graphics/Vulkan/Device.h"
 #include "Graphics/Vulkan/FrameScheduler.h"
 #include "Graphics/Vulkan/GpuCrashReporter.h"
@@ -10,8 +16,6 @@
 #include "Graphics/Vulkan/Surface.h"
 #include "Graphics/Vulkan/Swapchain.h"
 #include "Platform/Window.h"
-
-#include <cmath>
 
 namespace ghost::graphics {
 
@@ -69,15 +73,43 @@ bool Renderer::initialize(platform::Window& window, const Desc& desc) {
     }
     core::Log::info("Swapchain {}x{}, {} images, vsync {}", m_swapchain->extent().width, m_swapchain->extent().height,
                     m_swapchain->imageCount(), desc.vsync ? "on" : "off");
+
+    m_deletionQueue = std::make_unique<vulkan::DeletionQueue>();
+    m_bindless = std::make_unique<vulkan::BindlessDescriptors>();
+    if (!m_bindless->create(*m_device)) {
+        return false;
+    }
+    m_shaderCompiler = std::make_unique<shader::ShaderCompiler>();
+    if (!m_shaderCompiler->initialize({core::Paths::shaderLibrary()})) {
+        return false;
+    }
+    m_pipelines = std::make_unique<shader::PipelineLibrary>();
+    m_pipelines->initialize(*m_device, *m_bindless, *m_deletionQueue, *m_shaderCompiler);
+
+    m_splash = std::make_unique<passes::SplashPass>();
+    m_splash->initialize(*m_pipelines, m_swapchain->format());
+
     m_initialized = true;
     return true;
 }
 
-void Renderer::shutdown() {
+void Renderer::waitIdle() const {
     if (m_device) {
         m_device->waitIdle();
     }
+}
+
+void Renderer::shutdown() {
+    waitIdle();
     // Reverse creation order: everything that lives on the device goes before the device, the surface before the instance.
+    m_splash.reset();
+    m_pipelines.reset();
+    m_shaderCompiler.reset();
+    if (m_deletionQueue) {
+        m_deletionQueue->flushAll();
+    }
+    m_deletionQueue.reset();
+    m_bindless.reset();
     m_swapchain.reset();
     m_frames.reset();
     m_device.reset();
@@ -103,8 +135,14 @@ bool Renderer::syncSwapchainWithWindow() {
     return true;
 }
 
-void Renderer::renderFrame(double timeSeconds) {
-    if (!m_initialized || !syncSwapchainWithWindow()) {
+void Renderer::renderFrame(double timeSeconds, const OverlayRecorder& overlay) {
+    if (!m_initialized) {
+        return;
+    }
+    // Retire objects the GPU is done with, then pick up edited shaders (replacements retire after the last submitted frame).
+    m_deletionQueue->flush(m_frames->completedFrame());
+    m_pipelines->update(m_frames->frameNumber());
+    if (!syncSwapchainWithWindow()) {
         return;
     }
 
@@ -116,19 +154,36 @@ void Renderer::renderFrame(double timeSeconds) {
         return;
     }
 
-    // Placeholder frame until the render graph exists: clear to a slowly breathing ghost-light amber.
     const VkImage image = m_swapchain->image(imageIndex);
-    vulkan::DebugUtils::beginLabel(cmd, "Clear");
-    vulkan::GpuCrashReporter::checkpoint(cmd, "Clear");
-    imageBarrier(cmd, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                 VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_NONE, VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT);
-    const float glow = 0.5f + 0.5f * static_cast<float>(std::sin(timeSeconds * 1.5));
-    const VkClearColorValue color{{0.06f + 0.05f * glow, 0.045f + 0.03f * glow, 0.02f, 1.0f}};
-    const VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-    vkCmdClearColorImage(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range);
-    imageBarrier(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                 VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_2_NONE, VK_ACCESS_2_NONE);
+    const VkExtent2D extent = m_swapchain->extent();
+    imageBarrier(cmd, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                 VK_ACCESS_2_NONE, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+
+    VkRenderingAttachmentInfo colorAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+    colorAttachment.imageView = m_swapchain->view(imageIndex);
+    colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    VkRenderingInfo rendering{VK_STRUCTURE_TYPE_RENDERING_INFO};
+    rendering.renderArea = {{0, 0}, extent};
+    rendering.layerCount = 1;
+    rendering.colorAttachmentCount = 1;
+    rendering.pColorAttachments = &colorAttachment;
+
+    vulkan::DebugUtils::beginLabel(cmd, "Splash + UI");
+    vulkan::GpuCrashReporter::checkpoint(cmd, "Splash + UI");
+    vkCmdBeginRendering(cmd, &rendering);
+    m_bindless->bind(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS);
+    m_splash->record(cmd, extent, static_cast<float>(timeSeconds));
+    if (overlay) {
+        overlay(cmd);
+    }
+    vkCmdEndRendering(cmd);
     vulkan::DebugUtils::endLabel(cmd);
+
+    imageBarrier(cmd, image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                 VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_NONE, VK_ACCESS_2_NONE);
 
     m_frames->submit(m_frames->imageAvailable(), m_swapchain->renderFinished(imageIndex));
     if (!m_swapchain->present(m_device->graphicsQueue(), imageIndex)) {
@@ -142,6 +197,14 @@ bool Renderer::validationActive() const {
 
 std::string Renderer::gpuName() const {
     return m_device ? m_device->name() : std::string();
+}
+
+VkFormat Renderer::swapchainFormat() const {
+    return m_swapchain->format();
+}
+
+uint32_t Renderer::swapchainImageCount() const {
+    return m_swapchain->imageCount();
 }
 
 } // namespace ghost::graphics

@@ -49,6 +49,27 @@ target_include_directories(vma SYSTEM INTERFACE "${GHOST_DEPS_DIR}/vma/include")
 target_compile_definitions(vma INTERFACE VMA_STATIC_VULKAN_FUNCTIONS=0 VMA_DYNAMIC_VULKAN_FUNCTIONS=0)
 target_link_libraries(vma INTERFACE volk)
 
+# --- Slang: runtime shader compiler (prebuilt release); its DLLs are copied next to each executable ------
+set(GHOST_SLANG_DIR "${GHOST_TOOLS_DIR}/slang")
+ghost_require_dependency("${GHOST_SLANG_DIR}")
+add_library(slang SHARED IMPORTED GLOBAL)
+set_target_properties(slang PROPERTIES
+  IMPORTED_LOCATION "${GHOST_SLANG_DIR}/bin/slang.dll"
+  IMPORTED_IMPLIB "${GHOST_SLANG_DIR}/lib/slang.lib"
+  INTERFACE_INCLUDE_DIRECTORIES "${GHOST_SLANG_DIR}/include")
+# slang.dll is a thin loader for slang-compiler.dll; the glslang/glsl modules help with SPIR-V. slang-llvm is CPU-only: skipped.
+set(GHOST_RUNTIME_DLLS
+  "${GHOST_SLANG_DIR}/bin/slang.dll"
+  "${GHOST_SLANG_DIR}/bin/slang-compiler.dll"
+  "${GHOST_SLANG_DIR}/bin/slang-glslang.dll"
+  "${GHOST_SLANG_DIR}/bin/slang-glsl-module.dll")
+
+function(ghost_copy_runtime_dlls target)
+  add_custom_command(TARGET ${target} POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${GHOST_RUNTIME_DLLS} "$<TARGET_FILE_DIR:${target}>"
+    VERBATIM)
+endfunction()
+
 # --- GLFW: window and input --------------------------------------------------------------------------
 ghost_require_dependency("${GHOST_DEPS_DIR}/glfw")
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -56,3 +77,18 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory("${GHOST_DEPS_DIR}/glfw" "${CMAKE_BINARY_DIR}/_deps/glfw" EXCLUDE_FROM_ALL SYSTEM)
+
+# --- Dear ImGui (docking branch) with the GLFW and Vulkan (volk) backends ------------------------------
+set(GHOST_IMGUI_DIR "${GHOST_DEPS_DIR}/imgui")
+ghost_require_dependency("${GHOST_IMGUI_DIR}")
+add_library(imgui STATIC
+  "${GHOST_IMGUI_DIR}/imgui.cpp"
+  "${GHOST_IMGUI_DIR}/imgui_draw.cpp"
+  "${GHOST_IMGUI_DIR}/imgui_tables.cpp"
+  "${GHOST_IMGUI_DIR}/imgui_widgets.cpp"
+  "${GHOST_IMGUI_DIR}/imgui_demo.cpp"
+  "${GHOST_IMGUI_DIR}/backends/imgui_impl_glfw.cpp"
+  "${GHOST_IMGUI_DIR}/backends/imgui_impl_vulkan.cpp")
+target_include_directories(imgui SYSTEM PUBLIC "${GHOST_IMGUI_DIR}" "${GHOST_IMGUI_DIR}/backends")
+target_compile_definitions(imgui PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK IMGUI_DISABLE_OBSOLETE_FUNCTIONS)
+target_link_libraries(imgui PUBLIC volk glfw)

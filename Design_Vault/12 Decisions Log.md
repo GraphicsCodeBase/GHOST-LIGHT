@@ -62,5 +62,11 @@ tags: [decisions]
 | 2026-10-10 | Frames in flight = **2**, synchronized by **one timeline semaphore** (no fences) | Simpler and explainable; matches Vulkan 1.3 practice |
 | 2026-10-10 | Validation layer zip: Release, **static CRT**, mimalloc with `MI_OVERRIDE=OFF` (VVL defines its own new/delete) | Runs on any machine without extra runtimes; avoids duplicate-symbol link error |
 | 2026-10-10 | Smoke test **fails in Debug if validation isn't active** and resizes the window twice | "Zero validation errors" is meaningless if validation didn't run; resize exercises swapchain recreation |
+| 2026-10-10 | **One bindless descriptor set + one pipeline layout** (set 0, 256 B push constants) for every pipeline; buffers via buffer device address | No per-pass descriptor/reflection plumbing; techniques never manage descriptors |
+| 2026-10-10 | Slang target: **SPIR-V 1.6, column-major matrices, scalar layout**, debug info in Debug; one fresh session per compile | Matches glm and C++ struct layout; edited files always re-read |
+| 2026-10-10 | **Reverse-Z** depth (near = 1, compare GREATER) | Much better depth precision with a float depth buffer |
+| 2026-10-10 | Hot reload polls shader files **4×/s**; a broken edit keeps the last working pipeline and shows the error overlay; broken at startup = logged error | "Engine never gets in my way" guarantee #1, and `run.bat test` still catches shipped breakage |
+| 2026-10-10 | Smoke test **breaks and fixes a real shader file** in `Build/SmokeTest/` and checks error location, last-good pipeline and recovery | The hot-reload acceptance criterion is verified on every `run.bat test`, not just by hand |
+| 2026-10-10 | ImGui layout lives in **`User/imgui.ini`**; UI uses GLFW privately (ImGui input backend) | Machine-specific state stays in `User/` |
 
 See also: [[13 Open Questions]]

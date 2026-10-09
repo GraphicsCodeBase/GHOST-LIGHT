@@ -6,6 +6,8 @@ What it checks (grows with each M0a step):
 - the engine initializes with default settings (it never reads or writes `User/settings.json`)
 - it runs 60 frames and exits with code 0, resizing the window twice on the way (forces swapchain recreation)
 - in Debug, the pinned Vulkan validation layer **is active** (with synchronization validation)
+- **shader hot reload**: writes a compute shader to `Build/SmokeTest/`, breaks it (must be reported at line 4 while the
+  last working pipeline keeps running), fixes it (must reload)
 - **zero errors logged**, which includes every Vulkan validation error (later: every scene in `Content/Scenes/` loads and renders)
 
 **Depends on:** the `Ghost_App` library (same code as `GhostLight.exe`).

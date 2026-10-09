@@ -4,7 +4,11 @@
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "Graphics/Renderer/Renderer.h"
+#include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
+#include "UI/ImGuiLayer.h"
+#include "UI/PerformanceOverlay.h"
+#include "UI/ShaderErrorOverlay.h"
 
 #include <cstdio>
 #include <format>
@@ -30,6 +34,10 @@ Engine::~Engine() {
     if (m_initialized) {
         core::Log::info("Shutting down after {} frames", m_framesRun);
     }
+    if (m_renderer) {
+        m_renderer->waitIdle(); // ImGui's Vulkan objects may still be used by frames in flight
+    }
+    m_ui.reset();
     m_renderer.reset(); // the Vulkan surface must go before the window it was created from
     m_window.reset();
     core::Log::closeFile();
@@ -68,6 +76,10 @@ bool Engine::initialize() {
     if (!m_renderer->initialize(*m_window, rendererDesc)) {
         return false;
     }
+    m_ui = std::make_unique<ui::ImGuiLayer>();
+    if (!m_ui->initialize(*m_window, *m_renderer, m_options.useUserSettings)) {
+        return false;
+    }
 
     m_initialized = true;
     return true;
@@ -91,7 +103,8 @@ int Engine::run() {
         }
         handleGlobalShortcuts();
         updateWindowTitle();
-        m_renderer->renderFrame(m_timer.elapsedSeconds());
+        drawUi();
+        m_renderer->renderFrame(m_timer.elapsedSeconds(), [this](VkCommandBuffer cmd) { m_ui->record(cmd); });
 
         ++m_framesRun;
         if (m_options.maxFrames != 0 && m_framesRun >= m_options.maxFrames) {
@@ -101,6 +114,20 @@ int Engine::run() {
 
     saveUserSettings();
     return 0;
+}
+
+void Engine::drawUi() {
+    m_ui->beginFrame();
+    ui::PerformanceOverlay::Stats stats;
+    stats.fps = m_timer.smoothedFps();
+    stats.gpuName = m_renderer->gpuName();
+    stats.validation = m_renderer->validationActive();
+    const glm::ivec2 size = m_window->framebufferSize();
+    stats.width = size.x;
+    stats.height = size.y;
+    ui::PerformanceOverlay::draw(stats);
+    ui::ShaderErrorOverlay::draw(m_renderer->pipelines().errors());
+    m_ui->endFrame();
 }
 
 bool Engine::validationActive() const {

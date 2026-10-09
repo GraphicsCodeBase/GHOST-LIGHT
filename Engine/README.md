@@ -11,8 +11,11 @@
 | [Core](Core/README.md) | Logging, asserts, root-relative paths, JSON files, user settings, frame timing | glm, nlohmann/json |
 | [Platform](Platform/README.md) | OS window and keyboard/mouse input | Core, GLFW (private) |
 | [Graphics/Vulkan](Graphics/Vulkan/README.md) | Vulkan instance, device, swapchain, frames in flight, VMA, crash reports | Core, Platform, volk, vk-bootstrap, VMA |
-| [Graphics/Renderer](Graphics/Renderer/README.md) | Per-frame orchestration | Core, Platform, Graphics/Vulkan |
-| [App](App/README.md) | `Engine` class, frame loop, `GhostLight.exe` | Core, Platform, Graphics/Renderer |
+| [Graphics/ShaderCompiler](Graphics/ShaderCompiler/README.md) | Slang → SPIR-V, pipeline library, hot reload | Core, Graphics/Vulkan, Slang (private) |
+| [Graphics/Passes](Graphics/Passes/README.md) | Built-in render passes + their shaders | Core, Graphics/Vulkan, Graphics/ShaderCompiler |
+| [Graphics/Renderer](Graphics/Renderer/README.md) | Per-frame orchestration | Core, Platform, Graphics/Vulkan, ShaderCompiler, Passes |
+| [UI](UI/README.md) | Dear ImGui, overlays (shader errors, performance) | Core, Platform, Graphics/*, ImGui (private) |
+| [App](App/README.md) | `Engine` class, frame loop, `GhostLight.exe` | Core, Platform, Graphics/Renderer, UI |
 
 More Graphics submodules, World, Assets, UI and DebugTools arrive in later M0a steps (see [Graphics](Graphics/README.md)).
 Physics and Sandbox arrive in M0b.

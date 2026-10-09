@@ -18,7 +18,8 @@ tags: [spec, standards]
 ## Shaders (Slang)
 - File names in `PascalCase` (`ShadowRayGen.slang`).
 - Shared code only through `ShaderLibrary/`.
-- Entry points: `rayGen`, `closestHit`, `anyHit`, `miss`, `main` (compute).
+- Entry points: `rayGen`, `closestHit`, `anyHit`, `miss`, `main` (compute), `vertexMain`, `fragmentMain`; each with its `[shader("...")]` attribute.
+- Shared modules start with `module <Name>;` and mark exported declarations `public`.
 
 ## JSON (scenes, prefabs, configs)
 - 2-space indent, `camelCase` keys, paths relative to `Content/`.

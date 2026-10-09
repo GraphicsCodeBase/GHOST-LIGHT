@@ -2,7 +2,10 @@
 add_subdirectory(Core)
 add_subdirectory(Platform)
 add_subdirectory(Graphics/Vulkan)
+add_subdirectory(Graphics/ShaderCompiler)
+add_subdirectory(Graphics/Passes)
 add_subdirectory(Graphics/Renderer)
+add_subdirectory(UI)
 add_subdirectory(App)
 
 ghost_check_module_includes()
