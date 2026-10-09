@@ -1,6 +1,7 @@
 // Engine startup (paths, log, settings, window) and the main loop.
 #include "App/Engine.h"
 
+#include "Assets/AssetRegistry.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "DebugTools/FrameCapture.h"
@@ -9,7 +10,9 @@
 #include "Platform/Window.h"
 #include "UI/ImGuiLayer.h"
 #include "UI/PerformanceOverlay.h"
+#include "UI/SceneErrorOverlay.h"
 #include "UI/ShaderErrorOverlay.h"
+#include "World/World.h"
 
 #include <cstdio>
 #include <format>
@@ -20,6 +23,8 @@
 namespace ghost::app {
 
 namespace {
+
+constexpr const char* kDefaultScene = "Scenes/Sponza.scene.json";
 
 #ifdef GHOST_DEBUG
 constexpr const char* kBuildConfig = "Debug";
@@ -82,6 +87,17 @@ bool Engine::initialize() {
         return false;
     }
 
+    m_assets = std::make_unique<assets::AssetRegistry>();
+    m_world = std::make_unique<world::World>();
+    std::string scene = m_options.scene;
+    if (scene.empty()) {
+        scene = (m_options.useUserSettings && !m_settings.lastScene.empty()) ? m_settings.lastScene : kDefaultScene;
+    }
+    if (!loadScene(scene) && scene != kDefaultScene) {
+        core::Log::warning("Falling back to the default scene {}", kDefaultScene);
+        loadScene(kDefaultScene);
+    }
+
     m_initialized = true;
     return true;
 }
@@ -104,6 +120,13 @@ int Engine::run() {
         }
         handleGlobalShortcuts();
         updateWindowTitle();
+
+        world::SceneLoadResult reload;
+        if (m_world->reloadIfChanged(*m_assets, reload)) {
+            reportSceneResult(reload, m_world->currentScene());
+        }
+        m_world->update();
+
         drawUi();
         m_renderer->renderFrame(m_timer.elapsedSeconds(), [this](VkCommandBuffer cmd) { m_ui->record(cmd); });
 
@@ -132,7 +155,34 @@ void Engine::drawUi() {
     }
     ui::PerformanceOverlay::draw(stats);
     ui::ShaderErrorOverlay::draw(m_renderer->pipelines().errors());
+    ui::SceneErrorOverlay::draw(m_sceneErrors, m_sceneWarnings);
     m_ui->endFrame();
+}
+
+bool Engine::loadScene(const std::string& contentPath) {
+    const world::SceneLoadResult result = m_world->loadScene(contentPath, *m_assets);
+    reportSceneResult(result, contentPath);
+    if (result.loaded && m_options.useUserSettings) {
+        m_settings.lastScene = contentPath;
+    }
+    return result.loaded;
+}
+
+void Engine::reportSceneResult(const world::SceneLoadResult& result, const std::string& contentPath) {
+    for (const std::string& error : result.errors) {
+        core::Log::error("{}", error);
+    }
+    for (const std::string& warning : result.warnings) {
+        core::Log::warning("{}", warning);
+    }
+    if (result.loaded) {
+        core::Log::info("Scene {} loaded: {} entities, {} error(s), {} warning(s)", contentPath, result.entityCount, result.errors.size(),
+                        result.warnings.size());
+    } else {
+        core::Log::error("Scene {} was not loaded; the previous scene stays", contentPath);
+    }
+    m_sceneErrors = result.errors;
+    m_sceneWarnings = result.warnings;
 }
 
 bool Engine::validationActive() const {

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "Damaged Helmet",
+  "category": "Props",
+  "components": {
+    "MeshRenderer": { "model": "Assets/Models/DamagedHelmet/DamagedHelmet.glb" }
+  }
+}

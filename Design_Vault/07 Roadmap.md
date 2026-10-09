@@ -21,8 +21,8 @@ tags: [roadmap]
 - [x] Vulkan 1.3 via volk, RT extensions, validation layers from `.tools/`, debug names
 - [x] VMA, frames in flight, timeline sync
 - [x] Render graph (transient / persistent / history, auto barriers)
-- [ ] EnTT world + core components (`Transform`, `Name`, `MeshRenderer`, lights, `Camera`)
-- [ ] JSON **scene loading** (entities, prefabs, lights, environment, technique settings)
+- [x] EnTT world + core components (`Transform`, `Name`, `MeshRenderer`, lights, `Camera`)
+- [x] JSON **scene loading** (entities, prefabs, lights, environment, technique settings)
 - [ ] glTF loading → asset registry → GPU scene extraction from ECS
 - [ ] BLAS per mesh, TLAS per frame, SBT builder, ray query
 - [ ] G-buffer incl. motion vectors and entity ID

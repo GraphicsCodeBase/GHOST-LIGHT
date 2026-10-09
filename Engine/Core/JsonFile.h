@@ -14,6 +14,7 @@ public:
         bool ok = false;
         nlohmann::json value;
         std::string error; // e.g. "Content/Scenes/X.scene.json: parse error at line 4, column 7: ..."
+        std::string text;  // the raw file contents (JsonReader turns value positions into line numbers with it)
     };
 
     // Parses the file. // and /* */ comments are allowed so hand-edited scene files can be annotated.

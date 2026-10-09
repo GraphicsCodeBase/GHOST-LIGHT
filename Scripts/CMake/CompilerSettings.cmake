@@ -8,6 +8,16 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Debug optimization flags are chosen per target instead of globally: most engine code is unoptimized with runtime
+# checks, but asset import (and its codecs) is optimized even in Debug so loading Sponza doesn't take seconds.
+# (/RTC1 cannot be combined with /O2.) Pass these quoted: target_compile_options(t PRIVATE "${GHOST_DEBUG_FLAGS}").
+foreach(flag /RTC1 /Od /Ob0)
+  string(REPLACE "${flag}" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  string(REPLACE "${flag}" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+endforeach()
+set(GHOST_DEBUG_FLAGS "$<$<CONFIG:Debug>:/Od;/Ob0;/RTC1>")
+set(GHOST_OPTIMIZED_DEBUG_FLAGS "$<$<CONFIG:Debug>:/O2;/Ob2>")
+
 # Debug info goes inside the .obj files (/Z7): no PDB contention between parallel Ninja jobs.
 set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:Embedded>")
 

@@ -1,6 +1,8 @@
 # Engine modules (Claude's code). Every subfolder with a CMakeLists.txt is one module; see Engine/README.md.
 add_subdirectory(Core)
 add_subdirectory(Platform)
+add_subdirectory(Assets)
+add_subdirectory(World)
 add_subdirectory(Graphics/Vulkan)
 add_subdirectory(Graphics/ShaderCompiler)
 add_subdirectory(Graphics/RenderGraph)

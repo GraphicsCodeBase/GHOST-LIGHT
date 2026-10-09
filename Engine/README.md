@@ -10,6 +10,8 @@
 |---|---|---|
 | [Core](Core/README.md) | Logging, asserts, root-relative paths, JSON files, user settings, frame timing | glm, nlohmann/json |
 | [Platform](Platform/README.md) | OS window and keyboard/mouse input | Core, GLFW (private) |
+| [Assets](Assets/README.md) | glTF/image/HDR import, procedural meshes, asset registry (CPU only) | Core, cgltf + stb (private) |
+| [World](World/README.md) | EnTT world, components, systems, scene/prefab JSON loading | Core, Assets, EnTT |
 | [Graphics/Vulkan](Graphics/Vulkan/README.md) | Vulkan instance, device, swapchain, frames in flight, VMA, crash reports | Core, Platform, volk, vk-bootstrap, VMA |
 | [Graphics/ShaderCompiler](Graphics/ShaderCompiler/README.md) | Slang → SPIR-V, pipeline library, hot reload | Core, Graphics/Vulkan, Slang (private) |
 | [Graphics/RenderGraph](Graphics/RenderGraph/README.md) | Pass declarations → allocations, barriers, timings | Core, Graphics/Vulkan |
@@ -17,10 +19,9 @@
 | [Graphics/Renderer](Graphics/Renderer/README.md) | Per-frame orchestration | Core, Platform, Graphics/* |
 | [UI](UI/README.md) | Dear ImGui, overlays (shader errors, performance) | Core, Platform, Graphics/*, ImGui (private) |
 | [DebugTools](DebugTools/README.md) | Screenshots (F12) | Core, Graphics/Renderer |
-| [App](App/README.md) | `Engine` class, frame loop, `GhostLight.exe` | Core, Platform, Graphics/Renderer, UI, DebugTools |
+| [App](App/README.md) | `Engine` class, frame loop, `GhostLight.exe` | Core, Platform, Assets, World, Graphics/Renderer, UI, DebugTools |
 
-More Graphics submodules, World, Assets, UI and DebugTools arrive in later M0a steps (see [Graphics](Graphics/README.md)).
-Physics and Sandbox arrive in M0b.
+More Graphics submodules arrive in later M0a steps (see [Graphics](Graphics/README.md)). Physics and Sandbox arrive in M0b.
 
 ## Rules enforced by the build
 - A module may only `#include` modules it lists in `DEPENDS` (directly or transitively). Breaking this fails

@@ -7,6 +7,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace ghost::platform {
 class Window;
@@ -17,6 +19,13 @@ class Renderer;
 namespace ghost::ui {
 class ImGuiLayer;
 }
+namespace ghost::assets {
+class AssetRegistry;
+}
+namespace ghost::world {
+class World;
+struct SceneLoadResult;
+} // namespace ghost::world
 
 namespace ghost::app {
 
@@ -35,6 +44,12 @@ public:
     uint64_t framesRun() const { return m_framesRun; }
     platform::Window& window() { return *m_window; }
     graphics::Renderer& renderer() { return *m_renderer; }
+    world::World& world() { return *m_world; }
+    assets::AssetRegistry& assets() { return *m_assets; }
+
+    // Loads a scene (relative to Content/), logs its problems and shows them on screen. Returns false when the file
+    // could not be read or parsed (the previous scene stays).
+    bool loadScene(const std::string& contentPath);
     // True when the Vulkan validation layers are loaded and reporting into the log.
     bool validationActive() const;
 
@@ -42,6 +57,7 @@ private:
     void handleGlobalShortcuts();
     void updateWindowTitle();
     void drawUi();
+    void reportSceneResult(const world::SceneLoadResult& result, const std::string& contentPath);
     void saveUserSettings();
 
     EngineOptions m_options;
@@ -50,6 +66,10 @@ private:
     std::unique_ptr<platform::Window> m_window;
     std::unique_ptr<graphics::Renderer> m_renderer;
     std::unique_ptr<ui::ImGuiLayer> m_ui;
+    std::unique_ptr<assets::AssetRegistry> m_assets;
+    std::unique_ptr<world::World> m_world;
+    std::vector<std::string> m_sceneErrors;   // shown by SceneErrorOverlay until dismissed
+    std::vector<std::string> m_sceneWarnings;
     uint64_t m_framesRun = 0;
     double m_titleRefreshSeconds = 0.0;
     bool m_initialized = false;

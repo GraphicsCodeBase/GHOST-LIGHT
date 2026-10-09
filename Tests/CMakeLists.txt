@@ -2,5 +2,5 @@
 add_executable(GhostLightSmokeTest SmokeTest.cpp)
 target_link_libraries(GhostLightSmokeTest PRIVATE Ghost_App)
 target_include_directories(GhostLightSmokeTest PRIVATE "${CMAKE_SOURCE_DIR}/Engine")
-target_compile_options(GhostLightSmokeTest PRIVATE /W4 /WX)
+target_compile_options(GhostLightSmokeTest PRIVATE /W4 /WX "${GHOST_DEBUG_FLAGS}")
 ghost_copy_runtime_dlls(GhostLightSmokeTest)

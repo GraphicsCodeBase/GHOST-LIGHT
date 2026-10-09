@@ -32,9 +32,10 @@ endfunction()
 #                  [DEPENDS <engine modules>...]      engine modules this one may include (public)
 #                  [PUBLIC_LIBS <targets>...]         third-party targets exposed in this module's headers
 #                  [PRIVATE_LIBS <targets>...]        third-party targets used only in .cpp files
-#                  [EXCLUDE <file names>...])         files in the folder that belong to another target
+#                  [EXCLUDE <file names>...]          files in the folder that belong to another target
+#                  [OPTIMIZE_IN_DEBUG])               build optimized even in Debug (hot CPU loops, e.g. asset import)
 function(ghost_add_module path)
-  cmake_parse_arguments(ARG "" "" "DEPENDS;PUBLIC_LIBS;PRIVATE_LIBS;EXCLUDE" ${ARGN})
+  cmake_parse_arguments(ARG "OPTIMIZE_IN_DEBUG" "" "DEPENDS;PUBLIC_LIBS;PRIVATE_LIBS;EXCLUDE" ${ARGN})
   ghost_module_target(target "${path}")
   ghost_collect_sources(sources "${GHOST_ENGINE_DIR}/${path}")
 
@@ -49,6 +50,11 @@ function(ghost_add_module path)
   add_library(${target} STATIC ${filtered})
   target_include_directories(${target} PUBLIC "${GHOST_ENGINE_DIR}")
   target_compile_options(${target} PRIVATE /W4 /WX)
+  if(ARG_OPTIMIZE_IN_DEBUG)
+    target_compile_options(${target} PRIVATE "${GHOST_OPTIMIZED_DEBUG_FLAGS}")
+  else()
+    target_compile_options(${target} PRIVATE "${GHOST_DEBUG_FLAGS}")
+  endif()
   foreach(dep IN LISTS ARG_DEPENDS)
     ghost_module_target(dep_target "${dep}")
     target_link_libraries(${target} PUBLIC ${dep_target})

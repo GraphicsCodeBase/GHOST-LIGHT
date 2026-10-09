@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "name": "Cornell Box",
+  "exposure": { "ev100": 1.0 },
+  "player": { "mode": "Fly", "start": "Front" },
+  "cameraBookmarks": [
+    { "name": "Front", "position": [0.0, 1.0, 3.9], "yawPitch": [0, 0] }
+  ],
+  "entities": [
+    { "name": "Cornell Box", "components": { "MeshRenderer": { "model": "procedural:CornellBox" } } }
+  ],
+  "techniques": {}
+}

@@ -72,5 +72,12 @@ tags: [decisions]
 | 2026-10-10 | Barrier model: per physical image track layout, last write and reads-since-write; transient images keep stage masks across frames so frame N+1 waits for frame N's use (no per-frame copies) | Correct with 2 frames in flight, minimal memory, passes sync validation |
 | 2026-10-10 | Screenshots (F12) via a **built-in uncompressed PNG writer**; the smoke test saves `Build/SmokeTest/LastFrame.png` | No extra dependency for M0a; lets every run be inspected visually |
 | 2026-10-10 | Placeholder tonemap = exposure + **ACES fit (Narkowicz)** + sRGB encode | Standard and simple; better tonemapping/exposure is an M7 topic |
+| 2026-10-10 | Starter assets pinned in `Content/AssetManifest.json`: Sponza (Khronos, 71 files @4995a638), Damaged Helmet, Kloofendal 2K HDRI (Poly Haven). Blue noise added in step 9 | Spec starter set; downloaded from the original sources |
+| 2026-10-10 | **Sponza's model files are under the CRYENGINE Limited License Agreement** (not CC), recorded in `CREDITS.md` | Fine for a non-commercial portfolio since we never redistribute it; revisit if the project's use changes |
+| 2026-10-10 | Scene errors carry **file + line + field path** via nlohmann `JSON_DIAGNOSTIC_POSITIONS`; problems are collected, the broken entity skipped, an unparsable file changes nothing; shown on screen and logged | Spec guarantee #5 ("bad JSON gives a clear error and doesn't crash") |
+| 2026-10-10 | Scene units: meters, degrees, lux (sun), candela (point/spot); exposure as **EV100** per scene; bookmark yaw 0 = -Z, 90 = +X | Physical units make the path tracer and raster lighting comparable |
+| 2026-10-10 | Namespaces mirror **modules**: everything in `World/` (incl. Components/, Systems/, Serialization/) is `ghost::world` | Readable component names (`world::Transform`); subfolders organize files only |
+| 2026-10-10 | Debug optimization flags are per target; **Assets builds optimized even in Debug** (`OPTIMIZE_IN_DEBUG`) | Sponza import 7.8 s → 0.3 s in Debug (also fixed: block file reads instead of stream iterators) |
+| 2026-10-10 | Asset cache (`AssetRegistry`) survives scene reloads; failed loads are not cached | Fast scene hot reload; fixing a missing asset works without restarting |
 
 See also: [[13 Open Questions]]

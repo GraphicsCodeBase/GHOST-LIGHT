@@ -23,6 +23,21 @@ target_compile_definitions(glm INTERFACE GLM_FORCE_DEPTH_ZERO_TO_ONE GLM_FORCE_R
 ghost_require_dependency("${GHOST_DEPS_DIR}/nlohmann-json")
 add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json SYSTEM INTERFACE "${GHOST_DEPS_DIR}/nlohmann-json/include")
+# Every parsed value remembers its byte position, so scene errors can name the line ("Sponza.scene.json(14): ...").
+target_compile_definitions(nlohmann_json INTERFACE JSON_DIAGNOSTIC_POSITIONS=1)
+
+# --- EnTT: the entity-component-system (header-only) ---------------------------------------------------
+ghost_require_dependency("${GHOST_DEPS_DIR}/entt")
+add_library(entt INTERFACE)
+target_include_directories(entt SYSTEM INTERFACE "${GHOST_DEPS_DIR}/entt/src")
+
+# --- cgltf + stb_image: header-only; their implementations are compiled in Engine/Assets ----------------
+ghost_require_dependency("${GHOST_DEPS_DIR}/cgltf")
+add_library(cgltf INTERFACE)
+target_include_directories(cgltf SYSTEM INTERFACE "${GHOST_DEPS_DIR}/cgltf")
+ghost_require_dependency("${GHOST_DEPS_DIR}/stb")
+add_library(stb INTERFACE)
+target_include_directories(stb SYSTEM INTERFACE "${GHOST_DEPS_DIR}/stb")
 
 # --- Vulkan headers + volk: the Vulkan API without the SDK (the loader ships with the GPU driver) ---------
 ghost_require_dependency("${GHOST_DEPS_DIR}/vulkan-headers")

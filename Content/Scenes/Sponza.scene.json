@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "name": "Sponza",
+  "environment": { "hdri": "Assets/HDRI/kloofendal_48d_partly_cloudy_2k.hdr", "intensity": 1.0 },
+  "exposure": { "ev100": 14.0 },
+  "player": { "mode": "Fly", "start": "Atrium" },
+  "cameraBookmarks": [
+    { "name": "Atrium", "position": [-9.0, 1.7, -0.3], "yawPitch": [90, 3] },
+    { "name": "Gallery", "position": [8.5, 6.2, 3.6], "yawPitch": [-110, -12] }
+  ],
+  "entities": [
+    { "name": "Sponza", "prefab": "Prefabs/Static/Sponza.prefab.json" },
+    {
+      "name": "Sun",
+      "components": {
+        "DirectionalLight": { "direction": [-0.25, -1.0, 0.18], "illuminance": 100000, "color": [1.0, 0.96, 0.9], "angularSizeDeg": 0.53 }
+      }
+    },
+    {
+      "name": "Helmet",
+      "prefab": "Prefabs/Props/DamagedHelmet.prefab.json",
+      "transform": { "position": [-4.0, 1.4, -0.3], "rotationEuler": [0, -90, 0], "scale": 0.6 }
+    }
+  ],
+  "techniques": {}
+}

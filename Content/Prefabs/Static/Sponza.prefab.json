@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "Sponza",
+  "category": "Static",
+  "components": {
+    "MeshRenderer": { "model": "Assets/Models/Sponza/Sponza.gltf" }
+  }
+}

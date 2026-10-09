@@ -2,18 +2,22 @@
 // exercises shader hot reload (break a shader, check the error is reported and the old pipeline survives, fix it),
 // and fails on any logged error or any Vulkan validation error.
 #include "App/Engine.h"
+#include "Assets/AssetRegistry.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
 #include "DebugTools/FrameCapture.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
+#include "World/Components/MeshRenderer.h"
+#include "World/World.h"
 
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -114,10 +118,73 @@ struct HotReloadCheck {
     }
 };
 
+// Scene loading: every shipped scene loads without problems; broken files report file + line and never crash.
+struct SceneCheck {
+    std::vector<std::string> failures;
+    size_t scenesLoaded = 0;
+
+    void fail(std::string reason) { failures.push_back(std::move(reason)); }
+
+    static bool contains(const std::vector<std::string>& messages, const std::string& needle) {
+        for (const std::string& message : messages) {
+            if (message.find(needle) != std::string::npos) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void step(ghost::app::Engine& engine, uint64_t frame) {
+        auto& world = engine.world();
+        if (frame == 1) {
+            const size_t renderers = world.registry().view<ghost::world::MeshRenderer>().size();
+            if (renderers < 2 || engine.assets().modelCount() < 2) {
+                fail("the default scene did not load its models (" + std::to_string(renderers) + " mesh renderers)");
+            }
+        } else if (frame == 90) {
+            // Every shipped scene must load cleanly: Engine::loadScene logs problems as errors, which fails the test.
+            for (const auto& entry : std::filesystem::directory_iterator(ghost::core::Paths::content() / "Scenes")) {
+                const std::string name = ghost::core::Paths::toUtf8(entry.path().filename());
+                if (name.ends_with(".scene.json")) {
+                    if (engine.loadScene("Scenes/" + name)) {
+                        ++scenesLoaded;
+                    } else {
+                        fail("Scenes/" + name + " did not load");
+                    }
+                }
+            }
+        } else if (frame == 95) {
+            // Called on the world directly: these problems are expected, so they must not reach the error log.
+            const size_t before = world.registry().view<ghost::world::MeshRenderer>().size();
+            const auto result = world.loadScene("../Tests/Data/BrokenSyntax.scene.json", engine.assets());
+            if (result.loaded || !contains(result.errors, "line 4")) {
+                fail("BrokenSyntax.scene.json: expected a parse error at line 4");
+            }
+            if (world.registry().view<ghost::world::MeshRenderer>().size() != before) {
+                fail("a scene that failed to parse replaced the running scene");
+            }
+        } else if (frame == 96) {
+            const auto result = world.loadScene("../Tests/Data/BrokenField.scene.json", engine.assets());
+            if (!result.loaded || !contains(result.errors, "BrokenField.scene.json(6): entities[1].transform.position") ||
+                !contains(result.errors, "DoesNotExist.gltf") || !contains(result.warnings, "DirectionalLite")) {
+                fail("BrokenField.scene.json: expected position/model errors with line numbers and an unknown-component warning");
+            }
+            for (const std::string& error : result.errors) {
+                std::printf("scene check (expected): %s\n", error.c_str());
+            }
+        } else if (frame == 97) {
+            if (!engine.loadScene("Scenes/Sponza.scene.json")) {
+                fail("could not return to Sponza");
+            }
+        }
+    }
+};
+
 } // namespace
 
 int main() {
     HotReloadCheck hotReload;
+    SceneCheck sceneCheck;
     std::filesystem::path capturePath;
     size_t passTimings = 0;
     ghost::app::EngineOptions options;
@@ -133,6 +200,7 @@ int main() {
             engine.window().setSize(1600, 900);
         }
         hotReload.step(engine, frame);
+        sceneCheck.step(engine, frame);
         if (frame == 200) {
             // The last rendered image, kept for inspection: Build/SmokeTest/LastFrame.png.
             capturePath = ghost::core::Paths::build() / "SmokeTest" / "LastFrame.png";
@@ -167,8 +235,14 @@ int main() {
     std::error_code ec;
     const bool captureOk = !capturePath.empty() && std::filesystem::file_size(capturePath, ec) > 1000;
     const bool timingsOk = passTimings >= 3; // Background, Tonemap, UI
+    const bool scenesOk = sceneCheck.failures.empty() && sceneCheck.scenesLoaded >= 2;
+    for (const std::string& failure : sceneCheck.failures) {
+        std::printf("scene check FAILED: %s\n", failure.c_str());
+    }
+    std::printf("scenes: %zu shipped scene(s) loaded cleanly\n", sceneCheck.scenesLoaded);
     const int errors = ghost::core::Log::errorCount();
-    const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk;
+    const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk &&
+                        scenesOk;
     std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, capture %s, GPU timers %zu passes, "
                 "engine exit code %d -> %s\n",
                 static_cast<unsigned long long>(frames), static_cast<unsigned long long>(kFramesToRun), errors,

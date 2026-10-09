@@ -6,7 +6,7 @@
 |---|---|
 | `Run.ps1` | The 6 steps behind `run.bat`: requirements → tools → configure → build → assets → launch / test |
 | `Common.ps1` | Step banners, `Build/run.log`, `Invoke-Logged` (runs a program, streams output to console + log) |
-| `Downloads.ps1` | Pinned downloads: fetch once into `.tools/downloads/`, verify SHA-256, extract, stamp. Used for dependencies and assets |
+| `Downloads.ps1` | Pinned downloads: fetch once into `.tools/downloads/`, verify SHA-256, extract or copy, stamp in `.tools/stamps/`. An entry is one file (`url` + `sha256`) or a file set (`baseUrl` + `files[]`, e.g. a glTF with 69 textures). Used for dependencies and assets |
 | `VisualStudio.ps1` | Finds VS 2022+ (17.5 or newer) with the C++ workload, loads `vcvars64` into this process only, strips any Vulkan SDK variables |
 | `Dependencies.json` | Every third-party library/tool: version, URL, SHA-256, size, license, destination |
 | [`CMake/`](CMake/README.md) | CMake helpers included by the root `CMakeLists.txt` |

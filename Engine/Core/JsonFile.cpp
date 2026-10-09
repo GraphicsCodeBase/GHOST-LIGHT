@@ -32,10 +32,10 @@ JsonFile::LoadResult JsonFile::load(const std::filesystem::path& path) {
         result.error = Paths::display(path) + ": cannot open the file (does it exist?)";
         return result;
     }
-    const std::string text{std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
+    result.text.assign(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
 
     try {
-        result.value = nlohmann::json::parse(text, nullptr, /*allow_exceptions*/ true, /*ignore_comments*/ true);
+        result.value = nlohmann::json::parse(result.text, nullptr, /*allow_exceptions*/ true, /*ignore_comments*/ true);
         result.ok = true;
     } catch (const nlohmann::json::exception& e) {
         result.error = Paths::display(path) + ": " + withoutExceptionId(e.what());

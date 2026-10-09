@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "name": "Broken fields (smoke test: valid JSON, wrong values)",
+  "entities": [
+    { "name": "Good", "components": { "MeshRenderer": { "model": "procedural:Cube" } } },
+    { "name": "BadPosition", "transform": { "position": "up" } },
+    { "name": "Typo", "components": { "DirectionalLite": { "illuminance": 5 } } },
+    { "name": "MissingModel", "components": { "MeshRenderer": { "model": "Assets/Models/DoesNotExist/DoesNotExist.gltf" } } }
+  ]
+}
