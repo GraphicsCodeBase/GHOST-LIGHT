@@ -24,6 +24,31 @@ ghost_require_dependency("${GHOST_DEPS_DIR}/nlohmann-json")
 add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json SYSTEM INTERFACE "${GHOST_DEPS_DIR}/nlohmann-json/include")
 
+# --- Vulkan headers + volk: the Vulkan API without the SDK (the loader ships with the GPU driver) ---------
+ghost_require_dependency("${GHOST_DEPS_DIR}/vulkan-headers")
+add_library(vulkan_headers INTERFACE)
+target_include_directories(vulkan_headers SYSTEM INTERFACE "${GHOST_DEPS_DIR}/vulkan-headers/include")
+target_compile_definitions(vulkan_headers INTERFACE VK_NO_PROTOTYPES)
+
+ghost_require_dependency("${GHOST_DEPS_DIR}/volk")
+add_library(volk STATIC "${GHOST_DEPS_DIR}/volk/volk.c")
+target_include_directories(volk SYSTEM PUBLIC "${GHOST_DEPS_DIR}/volk")
+target_link_libraries(volk PUBLIC vulkan_headers)
+
+# --- vk-bootstrap: instance, GPU selection, device and swapchain setup ---------------------------------
+ghost_require_dependency("${GHOST_DEPS_DIR}/vk-bootstrap")
+add_library(vk_bootstrap STATIC "${GHOST_DEPS_DIR}/vk-bootstrap/src/VkBootstrap.cpp")
+target_include_directories(vk_bootstrap SYSTEM PUBLIC "${GHOST_DEPS_DIR}/vk-bootstrap/src")
+target_link_libraries(vk_bootstrap PUBLIC vulkan_headers)
+
+# --- Vulkan Memory Allocator: header-only; the implementation is compiled in Graphics/Vulkan ------------
+ghost_require_dependency("${GHOST_DEPS_DIR}/vma")
+add_library(vma INTERFACE)
+target_include_directories(vma SYSTEM INTERFACE "${GHOST_DEPS_DIR}/vma/include")
+# Function pointers come from volk (vmaImportVulkanFunctionsFromVolk), not from static or dynamic lookup.
+target_compile_definitions(vma INTERFACE VMA_STATIC_VULKAN_FUNCTIONS=0 VMA_DYNAMIC_VULKAN_FUNCTIONS=0)
+target_link_libraries(vma INTERFACE volk)
+
 # --- GLFW: window and input --------------------------------------------------------------------------
 ghost_require_dependency("${GHOST_DEPS_DIR}/glfw")
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)

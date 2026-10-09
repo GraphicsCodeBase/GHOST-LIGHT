@@ -4,8 +4,9 @@
 
 What it checks (grows with each M0a step):
 - the engine initializes with default settings (it never reads or writes `User/settings.json`)
-- it runs 60 frames and exits with code 0
-- **zero errors logged** (later: zero Vulkan validation errors, every scene in `Content/Scenes/` loads and renders)
+- it runs 60 frames and exits with code 0, resizing the window twice on the way (forces swapchain recreation)
+- in Debug, the pinned Vulkan validation layer **is active** (with synchronization validation)
+- **zero errors logged**, which includes every Vulkan validation error (later: every scene in `Content/Scenes/` loads and renders)
 
 **Depends on:** the `Ghost_App` library (same code as `GhostLight.exe`).
 **Not responsible for:** performance measurements (DebugTools benchmark, M0b).

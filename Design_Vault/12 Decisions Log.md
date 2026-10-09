@@ -54,5 +54,13 @@ tags: [decisions]
 | 2026-10-10 | Dependencies come from **`Scripts/Dependencies.json`** (version, URL, SHA-256, size, license), downloaded by `run.bat`'s PowerShell bootstrap into `.tools/`; CMake only builds them (**no FetchContent**) | One downloader for tools, code and assets; sizes shown up front; checksums for every file; CMake never touches the network, so offline builds are guaranteed |
 | 2026-10-10 | Minimum **VS 2022 17.5** (bundles CMake 3.25) | Needed for `/Z7` via `CMAKE_MSVC_DEBUG_INFORMATION_FORMAT` and `add_subdirectory(... SYSTEM)` |
 | 2026-10-10 | The build **enforces module dependencies**: a quoted `#include` of a module not listed in `DEPENDS` (or another module's `Internal/`) fails the CMake configure step | Rules 1–2 of [[14 Project Structure]] can't silently erode |
+| 2026-10-10 | Implicit layers: only a **denylist of overlays** is disabled (`*steam*,*eos*,*obs*,*rtss*,*bandicam*,*overlay*,*fossilize*`), not all implicit layers | RenderDoc and Nsight inject as implicit layers and must keep working (refines the earlier "disable implicit layers" entry) |
+| 2026-10-10 | `VK_LAYER_PATH` is **always** set to `.tools/validation-layers`, even when missing | Found on the dev machine: without it, the loader silently picked up the 2022 SDK layer from the registry |
+| 2026-10-10 | Debug validation includes **synchronization validation** | Catches missing/wrong barriers, exactly what the render graph must get right |
+| 2026-10-10 | New module **`Graphics/Renderer`**: per-frame orchestration, the only graphics class App uses | Keeps App free of Vulkan details; not in the original layout |
+| 2026-10-10 | Swapchain is **`B8G8R8A8_UNORM`**; tonemap writes display-encoded values. **vsync** is a user setting (default on) | ImGui colors are authored in sRGB; uncapped mode exists for timing work |
+| 2026-10-10 | Frames in flight = **2**, synchronized by **one timeline semaphore** (no fences) | Simpler and explainable; matches Vulkan 1.3 practice |
+| 2026-10-10 | Validation layer zip: Release, **static CRT**, mimalloc with `MI_OVERRIDE=OFF` (VVL defines its own new/delete) | Runs on any machine without extra runtimes; avoids duplicate-symbol link error |
+| 2026-10-10 | Smoke test **fails in Debug if validation isn't active** and resizes the window twice | "Zero validation errors" is meaningless if validation didn't run; resize exercises swapchain recreation |
 
 See also: [[13 Open Questions]]

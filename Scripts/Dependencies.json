@@ -14,6 +14,17 @@
       "dest": ".tools/slang"
     },
     {
+      "name": "validation-layers",
+      "kind": "tool",
+      "version": "1.4.357.0",
+      "url": "https://github.com/GraphicsCodeBase/GHOST-LIGHT/releases/download/deps-validation-layers-1.4.357.0/validation-layers-1.4.357.0-win64.zip",
+      "sha256": "4046f98cad133789f5b8c724c134541733ed2f02ed1f9270273b0f7ed63fd8d9",
+      "sizeBytes": 6265871,
+      "license": "Apache-2.0 (+ MIT/Apache-2.0 deps, see LICENSES/ in the zip)",
+      "stripTopLevel": false,
+      "dest": ".tools/validation-layers"
+    },
+    {
       "name": "vulkan-headers",
       "kind": "source",
       "version": "vulkan-sdk-1.4.357.0",

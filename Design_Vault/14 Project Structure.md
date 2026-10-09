@@ -56,6 +56,7 @@ Raytracing_Engine/
 │  │  ├─ RenderGraph/             passes, resources, barriers, history buffers
 │  │  ├─ ShaderCompiler/          Slang compilation, hot reload, error overlay data
 │  │  ├─ GpuScene/                ECS → GPU buffers, TLAS instances, prev transforms
+│  │  ├─ Renderer/                per-frame orchestration (the only graphics class App uses)
 │  │  ├─ Passes/                  G-buffer, tonemap, present, reference path tracer
 │  │  └─ TechniqueRuntime/        Technique base class, registry, Param<T>
 │  ├─ World/                      ECS (EnTT)

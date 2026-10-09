@@ -31,7 +31,7 @@ tags: [spec, setup, portability]
 - Full output logged to `Build/run.log`.
 - **Installs nothing system-wide, never asks for admin.**
 - Environment changes (VS dev environment, removing any `VULKAN_SDK`/`VK_*` variables) apply **only to that process**.
-- **Validation layers:** Khronos publishes no Windows binaries, so `Scripts/BuildValidationLayers.ps1` builds a pinned tag once and the zip is mirrored on GHOST-LIGHT's GitHub Releases; `run.bat` fetches it into `.tools/`. The **engine itself** points the Vulkan loader at `.tools/` and disables implicit layers, so it behaves the same when launched from VS, RenderDoc or Nsight.
+- **Validation layers:** Khronos publishes no Windows binaries, so `Scripts/BuildValidationLayers.ps1` builds a pinned tag once and the zip is mirrored on GHOST-LIGHT's GitHub Releases; `run.bat` fetches it into `.tools/`. The **engine itself** points the Vulkan loader at `.tools/` (always, so an installed SDK can't stand in) and disables known overlay layers (Steam, Epic, OBS, ...), so it behaves the same when launched from VS, RenderDoc or Nsight.
 - **Downloaded dependency sources** live in `.tools/deps/`, so `run.bat clean` (which wipes `Build/`) never needs the internet.
 
 | Command | Action |

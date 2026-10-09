@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "comment": "Sources for Scripts/BuildValidationLayers.ps1 (maintainer tool), pinned to Vulkan-ValidationLayers' own scripts/known_good.json for this tag. Not used by run.bat.",
+  "layerVersion": "1.4.357.0",
+  "sources": [
+    {
+      "name": "vvl-validation-layers",
+      "version": "vulkan-sdk-1.4.357.0",
+      "url": "https://github.com/KhronosGroup/Vulkan-ValidationLayers/archive/refs/tags/vulkan-sdk-1.4.357.0.zip",
+      "sha256": "671e49d4f92f5e6cefae4b1835a0e74437019f356e3c7d322426e4b9aaa8a246",
+      "sizeBytes": 9246164,
+      "license": "Apache-2.0",
+      "stripTopLevel": true,
+      "dest": "Build/ValidationLayers/src/Vulkan-ValidationLayers"
+    },
+    {
+      "name": "vvl-vulkan-headers",
+      "version": "v1.4.357",
+      "url": "https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v1.4.357.zip",
+      "sha256": "daa0ac4dc7666d6b699e9bdb096efe0a5a813a449bbb0f14c01aa303d48f2d14",
+      "sizeBytes": 3409957,
+      "license": "Apache-2.0 OR MIT",
+      "stripTopLevel": true,
+      "dest": "Build/ValidationLayers/src/Vulkan-Headers"
+    },
+    {
+      "name": "vvl-vulkan-utility-libraries",
+      "version": "v1.4.357",
+      "url": "https://github.com/KhronosGroup/Vulkan-Utility-Libraries/archive/refs/tags/v1.4.357.zip",
+      "sha256": "97e7c8b2f91d1a118a102b12a5742e36d5e920f9a85ebd72b9c6aab844467763",
+      "sizeBytes": 1374091,
+      "license": "Apache-2.0",
+      "stripTopLevel": true,
+      "dest": "Build/ValidationLayers/src/Vulkan-Utility-Libraries"
+    },
+    {
+      "name": "vvl-spirv-headers",
+      "version": "29981f65241605e08b0ede4cfeb999fe3b723c6a",
+      "url": "https://github.com/KhronosGroup/SPIRV-Headers/archive/29981f65241605e08b0ede4cfeb999fe3b723c6a.zip",
+      "sha256": "4564a01bf1a5474945c5afd1337dafc0ad2bfba22f152b1f97d243bd2e1c177b",
+      "sizeBytes": 673513,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": "Build/ValidationLayers/src/SPIRV-Headers"
+    },
+    {
+      "name": "vvl-spirv-tools",
+      "version": "b707790a898e44038547df54580022fc1cf89c3d",
+      "url": "https://github.com/KhronosGroup/SPIRV-Tools/archive/b707790a898e44038547df54580022fc1cf89c3d.zip",
+      "sha256": "57458550d9532210a347c3d33c8245492fcb73d828641ddbb8fda3b76ea41f03",
+      "sizeBytes": 5059499,
+      "license": "Apache-2.0",
+      "stripTopLevel": true,
+      "dest": "Build/ValidationLayers/src/SPIRV-Tools"
+    },
+    {
+      "name": "vvl-mimalloc",
+      "version": "v3.3.2",
+      "url": "https://github.com/microsoft/mimalloc/archive/refs/tags/v3.3.2.zip",
+      "sha256": "66539a07c48eb868a7186b03db3fd8b56dd97453b7eab8aef8695ac93a5a743f",
+      "sizeBytes": 1584662,
+      "license": "MIT",
+      "stripTopLevel": true,
+      "dest": "Build/ValidationLayers/src/mimalloc"
+    }
+  ]
+}

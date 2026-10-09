@@ -39,6 +39,7 @@ void UserSettings::load() {
             windowMaximized = json.value("windowMaximized", windowMaximized);
             lastScene = json.value("lastScene", lastScene);
             cameraSpeed = json.value("cameraSpeed", cameraSpeed);
+            vsync = json.value("vsync", vsync);
         } catch (const nlohmann::json::exception& e) {
             Log::warning("{}: {}", Paths::display(path), e.what());
             valid = false;
@@ -69,6 +70,7 @@ void UserSettings::save() const {
     json["windowMaximized"] = windowMaximized;
     json["lastScene"] = lastScene;
     json["cameraSpeed"] = cameraSpeed;
+    json["vsync"] = vsync;
 
     std::string error;
     if (!JsonFile::save(settingsPath(), json, error)) {

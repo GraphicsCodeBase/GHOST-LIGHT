@@ -43,6 +43,8 @@ public:
     bool isFullscreen() const { return m_fullscreen; }
 
     void setTitle(const std::string& title);
+    // Restores a maximized window first, then sets the client size (screen coordinates).
+    void setSize(int width, int height);
     // Hides the cursor and reports unbounded mouse movement (camera control).
     void setCursorCaptured(bool captured);
     bool isCursorCaptured() const { return m_cursorCaptured; }
@@ -52,6 +54,8 @@ public:
     Input& input() { return m_input; }
     const Input& input() const { return m_input; }
     GLFWwindow* handle() const { return m_window; }
+    // The OS window handle (HWND on Windows) for creating a Vulkan surface without exposing GLFW.
+    void* nativeHandle() const;
 
 private:
     struct Placement {

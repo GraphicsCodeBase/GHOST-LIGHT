@@ -6,6 +6,8 @@
 #include <algorithm>
 
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 namespace ghost::platform {
 
@@ -157,6 +159,20 @@ bool Window::isMinimized() const {
 
 bool Window::isMaximized() const {
     return m_window && glfwGetWindowAttrib(m_window, GLFW_MAXIMIZED);
+}
+
+void Window::setSize(int width, int height) {
+    if (!m_window) {
+        return;
+    }
+    if (isMaximized()) {
+        glfwRestoreWindow(m_window);
+    }
+    glfwSetWindowSize(m_window, width, height);
+}
+
+void* Window::nativeHandle() const {
+    return m_window ? static_cast<void*>(glfwGetWin32Window(m_window)) : nullptr;
 }
 
 void Window::setTitle(const std::string& title) {

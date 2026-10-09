@@ -14,6 +14,8 @@ void printUsage() {
         "Usage: GhostLight.exe [options]\n"
         "  --scene <path>   scene to open, relative to Content/ (e.g. Scenes/Sponza.scene.json)\n"
         "  --frames <n>     quit after n frames (for automated runs)\n"
+        "  --validation     force Vulkan validation on (default in Debug)\n"
+        "  --no-validation  force Vulkan validation off (default in Release)\n"
         "  --help           show this text\n");
 }
 
@@ -27,7 +29,11 @@ bool CommandLine::parse(int argc, char** argv, EngineOptions& options) {
             printUsage();
             return false;
         }
-        if (arg == "--scene" && hasValue) {
+        if (arg == "--validation") {
+            options.validation = true;
+        } else if (arg == "--no-validation") {
+            options.validation = false;
+        } else if (arg == "--scene" && hasValue) {
             options.scene = argv[++i];
         } else if (arg == "--frames" && hasValue) {
             const std::string_view value = argv[++i];

@@ -11,6 +11,9 @@
 namespace ghost::platform {
 class Window;
 }
+namespace ghost::graphics {
+class Renderer;
+}
 
 namespace ghost::app {
 
@@ -27,6 +30,9 @@ public:
     int run();
 
     uint64_t framesRun() const { return m_framesRun; }
+    platform::Window& window() { return *m_window; }
+    // True when the Vulkan validation layers are loaded and reporting into the log.
+    bool validationActive() const;
 
 private:
     void handleGlobalShortcuts();
@@ -37,6 +43,7 @@ private:
     core::UserSettings m_settings;
     core::FrameTimer m_timer;
     std::unique_ptr<platform::Window> m_window;
+    std::unique_ptr<graphics::Renderer> m_renderer;
     uint64_t m_framesRun = 0;
     double m_titleRefreshSeconds = 0.0;
     bool m_initialized = false;

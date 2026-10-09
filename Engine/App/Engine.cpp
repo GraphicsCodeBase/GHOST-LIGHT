@@ -3,6 +3,7 @@
 
 #include "Core/Log.h"
 #include "Core/Paths.h"
+#include "Graphics/Renderer/Renderer.h"
 #include "Platform/Window.h"
 
 #include <cstdio>
@@ -29,6 +30,7 @@ Engine::~Engine() {
     if (m_initialized) {
         core::Log::info("Shutting down after {} frames", m_framesRun);
     }
+    m_renderer.reset(); // the Vulkan surface must go before the window it was created from
     m_window.reset();
     core::Log::closeFile();
 }
@@ -59,6 +61,14 @@ bool Engine::initialize() {
         return false;
     }
 
+    graphics::Renderer::Desc rendererDesc;
+    rendererDesc.validation = m_options.validation;
+    rendererDesc.vsync = m_settings.vsync;
+    m_renderer = std::make_unique<graphics::Renderer>();
+    if (!m_renderer->initialize(*m_window, rendererDesc)) {
+        return false;
+    }
+
     m_initialized = true;
     return true;
 }
@@ -76,8 +86,12 @@ int Engine::run() {
         }
 
         m_timer.tick();
+        if (m_options.onFrame) {
+            m_options.onFrame(*this, m_framesRun);
+        }
         handleGlobalShortcuts();
         updateWindowTitle();
+        m_renderer->renderFrame(m_timer.elapsedSeconds());
 
         ++m_framesRun;
         if (m_options.maxFrames != 0 && m_framesRun >= m_options.maxFrames) {
@@ -87,6 +101,10 @@ int Engine::run() {
 
     saveUserSettings();
     return 0;
+}
+
+bool Engine::validationActive() const {
+    return m_renderer && m_renderer->validationActive();
 }
 
 void Engine::handleGlobalShortcuts() {
