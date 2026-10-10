@@ -17,6 +17,7 @@
 #include "UI/SceneErrorOverlay.h"
 #include "UI/ShaderErrorOverlay.h"
 #include "UI/TechniquePanel.h"
+#include "UI/TextureViewerPanel.h"
 #include "World/Systems/GpuSceneExtractionSystem.h"
 #include "World/World.h"
 
@@ -174,6 +175,9 @@ void Engine::drawUi() {
     if (m_showTechniques) {
         ui::TechniquePanel::draw(m_renderer->techniques(), &m_showTechniques);
     }
+    if (m_showTextureViewer) {
+        ui::TextureViewerPanel::draw(*m_renderer, &m_showTextureViewer);
+    }
     m_ui->endFrame();
 }
 
@@ -246,6 +250,9 @@ void Engine::handleGlobalShortcuts() {
     }
     if (input.wasPressed(platform::Key::F2)) {
         m_showTechniques = !m_showTechniques;
+    }
+    if (input.wasPressed(platform::Key::F3)) {
+        m_showTextureViewer = !m_showTextureViewer;
     }
     if (input.wasPressed(platform::Key::F5)) {
         const bool raster = m_renderer->mode() == graphics::Renderer::Mode::Raster;

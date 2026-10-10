@@ -8,6 +8,7 @@
 | `DeferredLighting.slang` | `LightingPass` compute shader (placeholder Lambert lighting) |
 | `ReferencePathTracer.slang` | `ReferencePathTracerPass`: ray generation (path loop + accumulation), miss, closest hit, alpha-test any-hit. The `RTG-TODO`s mark where the user's M2 work goes |
 | `Tonemap.slang` | `TonemapPass` fragment shader (exposure + ACES fit + sRGB) |
+| `TextureViewer.slang` | `TextureViewerPass` fragment shader (point-sampled texture in a screen rectangle, channel / range / octahedral modes) |
 
 Shared helpers come from `ShaderLibrary/` (`import Scene;`), never by copying code between shader files.
 

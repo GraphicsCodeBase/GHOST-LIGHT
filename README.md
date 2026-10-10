@@ -51,6 +51,7 @@ Later runs only rebuild what changed and start in seconds.
 | **W A S D**, **Space** / **C** | Fly; up / down |
 | **Shift** / **Ctrl** | Faster / slower; **mouse wheel** sets the base speed |
 | **F2** | Techniques panel: enable techniques, tune their parameters |
+| **F3** | Texture viewer: show any G-buffer target or technique output on screen |
 | **F5** | Raster ↔ reference path tracer (accumulates while the camera stands still) |
 | **F11** / **F12** | Fullscreen / screenshot to `Captures/` |
 

@@ -140,6 +140,7 @@ private:
     };
 
     void rebuildGeometryBuffers();
+    void loadBlueNoise();
     void retireTextures(std::vector<TextureUploader::Texture>& textures);
     void ensureCapacity(vulkan::GpuBuffer& buffer, size_t bytes, const char* name);
 
@@ -166,6 +167,7 @@ private:
     uint64_t m_lightRevision = 0;
 
     std::vector<TextureUploader::Texture> m_environment;
+    std::vector<TextureUploader::Texture> m_blueNoise; // ShaderLibrary/Random: blueNoise()
     glm::vec3 m_environmentAverage{0.0f};
     float m_environmentIntensity = 0.0f;
 

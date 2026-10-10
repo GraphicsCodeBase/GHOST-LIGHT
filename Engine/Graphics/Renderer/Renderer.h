@@ -52,6 +52,7 @@ class GBufferPass;
 class LightingPass;
 class ReferencePathTracerPass;
 class TonemapPass;
+class TextureViewerPass;
 } // namespace ghost::graphics::passes
 
 namespace ghost::graphics {
@@ -109,6 +110,8 @@ public:
     passes::ReferencePathTracerPass& pathTracer() { return *m_pathTracer; }
     // Every registered technique; toggling one rebuilds the render graph before the next frame.
     techniques::TechniqueManager& techniques() { return *m_techniques; }
+    // Texture viewer settings (UI/TextureViewerPanel); changing the texture name rebuilds the graph before the next frame.
+    passes::TextureViewerPass& textureViewer() { return *m_textureViewer; }
 
     void setMode(Mode mode);
     Mode mode() const { return m_mode; }
@@ -137,6 +140,8 @@ private:
     std::unique_ptr<passes::LightingPass> m_lighting;
     std::unique_ptr<passes::ReferencePathTracerPass> m_pathTracer;
     std::unique_ptr<passes::TonemapPass> m_tonemap;
+    std::unique_ptr<passes::TextureViewerPass> m_textureViewer;
+    std::string m_viewedTexture; // settings.texture when the graph was last built
     std::unique_ptr<techniques::TechniqueManager> m_techniques;
     Mode m_mode = Mode::Raster;
     bool m_graphDirty = false;

@@ -11,7 +11,7 @@
 | `Packing` | `octahedralEncode/Decode` (unit vectors in two SNORM values) | ✅ |
 | `GBuffer` | `GBufferIndices`, `Surface`, `loadSurface(frame, indices, pixel)`; documents the G-buffer layout | ✅ |
 | `Environment` | `environmentRadiance(frame, direction)` (HDRI or procedural daylight sky, × intensity, in nits), `environmentAverageRadiance(frame)` | ✅ |
-| `Random` | `pcgHash`, `Rng` (`next()`, `next2()`), `makeRng(pixel, sampleIndex)` | ✅ (blue noise: step 9) |
+| `Random` | `pcgHash`, `Rng` (`next()`, `next2()`), `makeRng(pixel, sampleIndex)`, `blueNoise(frame->blueNoiseTexture, pixel, frame->frameIndex)` (4 channels, animated by the golden ratio) | ✅ |
 
 > [!warning] Not here, on purpose
 > BRDF importance sampling, MIS, robust ray offsets, reservoirs. Those are techniques ([[08 RTG Technique Catalog]]).

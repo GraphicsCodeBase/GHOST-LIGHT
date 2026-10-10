@@ -8,6 +8,7 @@
 #include "DebugTools/FrameCapture.h"
 #include "Graphics/GpuScene/GpuScene.h"
 #include "Graphics/Passes/ReferencePathTracerPass.h"
+#include "Graphics/Passes/TextureViewerPass.h"
 #include "Graphics/RayTracing/SceneAccelerationStructures.h"
 #include "Graphics/TechniqueRuntime/Param.h"
 #include "Graphics/TechniqueRuntime/Technique.h"
@@ -307,6 +308,37 @@ struct TechniqueCheck {
     }
 };
 
+// Debug tools: blue noise is loaded into the frame constants, the texture viewer draws a G-buffer target (its pass
+// runs and is captured), and asking for a texture the graph does not produce is ignored without errors.
+struct DebugToolsCheck {
+    std::string failure = "never ran";
+
+    void step(ghost::app::Engine& engine, uint64_t frame) {
+        auto& renderer = engine.renderer();
+        auto& viewer = renderer.textureViewer().settings;
+        if (frame == 62) {
+            if (renderer.gpuScene().frameConstants().blueNoiseTexture == ghost::graphics::scene::kNoTexture) {
+                failure = "the blue noise texture was not loaded (Content/Assets/BlueNoise)";
+                return;
+            }
+            viewer.texture = "gbuffer.normal";
+            viewer.channels = ghost::graphics::passes::TextureViewerPass::Channels::OctahedralXy;
+        } else if (frame == 70) {
+            if (!TechniqueCheck::hasTiming(renderer, "TextureViewer")) {
+                failure = "the texture viewer pass did not run";
+                return;
+            }
+            ghost::debugtools::FrameCapture::requestPng(renderer, ghost::core::Paths::build() / "SmokeTest" / "TextureViewer.png");
+        } else if (frame == 75) {
+            viewer.texture = "does.not.exist"; // the pass must draw nothing and log no render graph error
+        } else if (frame == 80 && failure == "never ran") {
+            viewer.texture.clear(); // errors (counted for the whole run) would fail the test
+
+            failure.clear();
+        }
+    }
+};
+
 } // namespace
 
 int main() {
@@ -315,6 +347,7 @@ int main() {
     PlayerCheck playerCheck;
     PathTracerCheck pathTracerCheck;
     TechniqueCheck techniqueCheck;
+    DebugToolsCheck debugToolsCheck;
     std::filesystem::path capturePath;
     size_t passTimings = 0;
     ghost::app::EngineOptions options;
@@ -334,6 +367,7 @@ int main() {
         playerCheck.step(engine, frame);
         pathTracerCheck.step(engine, frame);
         techniqueCheck.step(engine, frame);
+        debugToolsCheck.step(engine, frame);
         if (frame == 200) {
             // The last rendered image, kept for inspection: Build/SmokeTest/LastFrame.png.
             capturePath = ghost::core::Paths::build() / "SmokeTest" / "LastFrame.png";
@@ -372,6 +406,10 @@ int main() {
     const bool playerOk = playerCheck.failure.empty();
     const bool pathTracerOk = pathTracerCheck.failure.empty();
     const bool techniquesOk = techniqueCheck.failure.empty();
+    const bool debugToolsOk = debugToolsCheck.failure.empty();
+    if (!debugToolsOk) {
+        std::printf("debug tools check FAILED: %s\n", debugToolsCheck.failure.c_str());
+    }
     if (!techniquesOk) {
         std::printf("technique check FAILED: %s\n", techniqueCheck.failure.c_str());
     }
@@ -387,7 +425,7 @@ int main() {
     std::printf("scenes: %zu shipped scene(s) loaded cleanly\n", sceneCheck.scenesLoaded);
     const int errors = ghost::core::Log::errorCount();
     const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk &&
-                        scenesOk && playerOk && pathTracerOk && techniquesOk;
+                        scenesOk && playerOk && pathTracerOk && techniquesOk && debugToolsOk;
     std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, capture %s, GPU timers %zu passes, "
                 "engine exit code %d -> %s\n",
                 static_cast<unsigned long long>(frames), static_cast<unsigned long long>(kFramesToRun), errors,

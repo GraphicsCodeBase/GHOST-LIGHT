@@ -112,6 +112,8 @@ public struct FrameConstants
     public GpuLight* lights;
     public uint hasSun;
     public uint tlasIndex; // gSceneTlas[tlasIndex] (Bindless): this frame's TLAS
+    public uint blueNoiseTexture; // 128x128 RGBA8 blue noise or kNoTexture: use Random's blueNoise()
+    public uint padding0;
 };
 
 // Equirectangular environment mapping: +Y up, u = 0.5 at -Z.

@@ -117,7 +117,9 @@ struct FrameConstants {
     uint64_t lights;
     uint32_t hasSun;
     uint32_t tlasIndex; // gSceneTlas[tlasIndex] in shaders (one TLAS per frame in flight)
+    uint32_t blueNoiseTexture; // 128x128 RGBA8 blue noise, bindless index or kNoTexture (ShaderLibrary/Random)
+    uint32_t padding0;
 };
-static_assert(sizeof(FrameConstants) == 480);
+static_assert(sizeof(FrameConstants) == 488);
 
 } // namespace ghost::graphics::scene

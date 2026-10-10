@@ -80,6 +80,7 @@ private:
     std::unique_ptr<sandbox::FlyController> m_player;
     bool m_resetCameraHistory = true; // no motion vectors across a teleport
     bool m_showTechniques = true;     // Techniques panel (F2)
+    bool m_showTextureViewer = false; // Texture viewer panel (F3)
     std::vector<std::string> m_sceneErrors;   // shown by SceneErrorOverlay until dismissed
     std::vector<std::string> m_sceneWarnings;
     uint64_t m_framesRun = 0;

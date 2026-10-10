@@ -31,9 +31,9 @@ tags: [roadmap]
 - [x] Technique API, auto-registration, auto ImGui params
 - [x] Example technique (not RTG): "visualize normals via ray query"
 - [x] Slang hot-reload + **error overlay** (last good shader keeps running)
-- [ ] GPU timers per pass, texture viewer
-- [ ] Asset manifest + starter assets ([[09 Assets#Starter set]])
-- [ ] Blue noise textures in `ShaderLibrary`
+- [x] GPU timers per pass, texture viewer
+- [x] Asset manifest + starter assets ([[09 Assets#Starter set]])
+- [x] Blue noise textures in `ShaderLibrary`
 - [ ] Smoke test (`run.bat test`)
 - [ ] Root README requirements kept accurate, `.gitignore`, git initialized
 

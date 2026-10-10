@@ -1,7 +1,9 @@
 // GpuScene: model upload into global buffers, per-frame instance/draw/light expansion, camera matrices (reverse-Z).
 #include "Graphics/GpuScene/GpuScene.h"
 
+#include "Assets/ImageLoader.h"
 #include "Core/Log.h"
+#include "Core/Paths.h"
 #include "Graphics/Vulkan/BindlessDescriptors.h"
 #include "Graphics/Vulkan/DeletionQueue.h"
 #include "Graphics/Vulkan/Device.h"
@@ -46,6 +48,20 @@ void GpuScene::initialize(const vulkan::Device& device, vulkan::BindlessDescript
     m_bindless = &bindless;
     m_deletionQueue = &deletionQueue;
     m_submit.create(device);
+    loadBlueNoise();
+}
+
+void GpuScene::loadBlueNoise() {
+    // Christoph Peters' 128x128 RGBA blue noise (CC0), fetched by run.bat through Content/AssetManifest.json.
+    const std::filesystem::path path = core::Paths::content() / "Assets" / "BlueNoise" / "LDR_RGBA_0.png";
+    assets::ImageData image;
+    std::string error;
+    if (!assets::ImageLoader::loadFile(path, assets::ImageData::Format::Rgba8, image, error)) {
+        core::Log::warning("GPU scene: no blue noise texture ({}); blueNoise() falls back to white noise", error);
+        return;
+    }
+    const assets::ImageData* images[] = {&image};
+    m_blueNoise = TextureUploader::upload(*m_device, *m_bindless, m_submit, images);
 }
 
 void GpuScene::shutdown() {
@@ -53,7 +69,7 @@ void GpuScene::shutdown() {
         return;
     }
     // The caller waited for the GPU: release immediately.
-    for (auto* list : {&m_textures, &m_environment}) {
+    for (auto* list : {&m_textures, &m_environment, &m_blueNoise}) {
         for (TextureUploader::Texture& texture : *list) {
             if (texture.bindlessIndex != kNoTexture) {
                 m_bindless->freeSampledImage(texture.bindlessIndex);
@@ -391,6 +407,7 @@ void GpuScene::prepareFrame(uint32_t slot, uint64_t frameIndex, VkExtent2D rende
     c.environmentAverage = m_environmentAverage;
     c.environmentIntensity = m_environmentIntensity;
     c.environmentTexture = m_environment.empty() ? kNoTexture : m_environment.front().bindlessIndex;
+    c.blueNoiseTexture = m_blueNoise.empty() ? kNoTexture : m_blueNoise.front().bindlessIndex;
     c.exposure = m_exposure;
     c.lightCount = static_cast<uint32_t>(m_lights.size());
     c.instanceCount = static_cast<uint32_t>(m_gpuInstances.size());

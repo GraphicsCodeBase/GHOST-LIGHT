@@ -8,6 +8,7 @@
 #include "Graphics/Passes/GBufferPass.h"
 #include "Graphics/Passes/LightingPass.h"
 #include "Graphics/Passes/ReferencePathTracerPass.h"
+#include "Graphics/Passes/TextureViewerPass.h"
 #include "Graphics/Passes/TonemapPass.h"
 #include "Graphics/RayTracing/SceneAccelerationStructures.h"
 #include "Graphics/RenderGraph/GpuTimers.h"
@@ -94,6 +95,8 @@ bool Renderer::initialize(platform::Window& window, const Desc& desc) {
     m_pathTracer->initialize(*m_pipelines, *m_device, *m_deletionQueue);
     m_tonemap = std::make_unique<passes::TonemapPass>();
     m_tonemap->initialize(*m_pipelines, m_swapchain->format());
+    m_textureViewer = std::make_unique<passes::TextureViewerPass>();
+    m_textureViewer->initialize(*m_pipelines, m_swapchain->format());
     m_techniques = std::make_unique<techniques::TechniqueManager>();
     m_techniques->initialize(*m_pipelines, *m_device, *m_deletionQueue);
     buildRenderGraph();
@@ -122,6 +125,8 @@ void Renderer::buildRenderGraph() {
         m_pathTracer->addTo(graph, *m_gpuScene); // the reference stays free of techniques
     }
     m_tonemap->addTo(graph, kSwapchain);
+    m_textureViewer->addTo(graph, kSwapchain); // after Tonemap, under the UI
+    m_viewedTexture = m_textureViewer->settings.texture;
     graph.addPass(
         "UI", rendergraph::PassKind::Raster,
         [](rendergraph::PassBuilder& builder) { builder.colorAttachment(kSwapchain, rendergraph::LoadOp::Load); },
@@ -162,6 +167,7 @@ void Renderer::shutdown() {
     // Reverse creation order: everything that lives on the device goes before the device, the surface before the instance.
     m_techniques.reset();
     m_tonemap.reset();
+    m_textureViewer.reset();
     m_pathTracer.reset();
     m_lighting.reset();
     m_gbuffer.reset();
@@ -265,7 +271,7 @@ void Renderer::renderFrame(const OverlayRecorder& overlay) {
     m_gpuScene->prepareFrame(m_frames->slot(), thisFrame, extent, thisFrame);
     m_tonemap->exposure = m_gpuScene->exposure();
     // Enabling/disabling a technique or switching modes changes the pass list.
-    if (m_techniques->enabledStateChanged() || m_graphDirty) {
+    if (m_techniques->enabledStateChanged() || m_graphDirty || m_textureViewer->settings.texture != m_viewedTexture) {
         buildRenderGraph();
     }
     m_graph->compile(extent, m_frames->frameNumber());

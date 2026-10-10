@@ -12,6 +12,8 @@ What it checks (grows with each M0a step):
   broken files in [`Data/`](Data/README.md) report exact locations and never crash or replace the running scene
 - **GPU scene**: after the first frame the default scene's models are on the GPU with instances to draw
 - **player**: holding W (injected like a real key event) flies the camera forward
+- **debug tools**: the blue noise texture is in the frame constants; the texture viewer shows `gbuffer.normal` (its pass runs;
+  saves `Build/SmokeTest/TextureViewer.png`); choosing a texture the graph doesn't produce logs no error
 - **techniques**: `RayQueryNormals` and the `_Template` technique are registered; scene-style settings reach their
   params; enabled, their passes run (GPU timings appear); saves `Build/SmokeTest/RayQueryNormals.png`
 - **ray tracing**: BLASes and TLAS instances exist for Sponza; the reference path tracer accumulates 50 samples in 50

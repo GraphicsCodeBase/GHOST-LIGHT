@@ -14,8 +14,8 @@ passes, and their order of creation and destruction.
   `accelerationStructures()`, `techniques()`. Mode switches and technique toggles rebuild the graph before the next frame.
 - `requestCapture(callback)` (screenshots), `gpuTimings()`, `gpuFrameMilliseconds()`, `validationActive()`, `gpuName()`.
 
-Render graph today: **TLAS → GBuffer → [PreLighting] → Lighting → [Lighting] → [Denoise] → [Post] → Tonemap → UI**
-(raster; brackets = enabled techniques of that stage) or **TLAS → PathTracer → Tonemap → UI** (path traced), → Capture
+Render graph today: **TLAS → GBuffer → [PreLighting] → Lighting → [Lighting] → [Denoise] → [Post] → Tonemap → [TextureViewer] → UI**
+(raster; brackets = enabled techniques of that stage) or **TLAS → PathTracer → Tonemap → [TextureViewer] → UI** (path traced; TextureViewer only while a texture is chosen in F3), → Capture
 when requested.
 
 **Depends on:** Core, Platform, Graphics/Vulkan, ShaderCompiler, RenderGraph, GpuScene, RayTracing, Passes, TechniqueRuntime.

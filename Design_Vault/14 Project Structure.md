@@ -76,7 +76,7 @@ Raytracing_Engine/
 │  │  ├─ Player/                  FlyController, WalkController, mode toggle
 │  │  ├─ Selection/               picking (TLAS ray query), selection state
 │  │  └─ Undo/                    undo stack
-│  ├─ DebugTools/                 texture viewer, GPU timers, A/B view, metrics, benchmark, screenshots, camera paths
+│  ├─ DebugTools/                 screenshots, A/B view, metrics, benchmark, camera paths (texture viewer: Passes + UI)
 │  ├─ UI/                         ImGui setup, spawn menu, inspector, technique panels, overlays
 │  └─ App/                        main(), engine loop, startup checks (GPU, RT support)
 │

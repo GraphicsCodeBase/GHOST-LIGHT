@@ -109,6 +109,18 @@
       "source": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy",
       "scenes": ["Scenes/Sponza.scene.json"],
       "dest": "Content/Assets/HDRI"
+    },
+    {
+      "name": "blue-noise",
+      "version": "free-blue-noise-textures@a64e300d",
+      "url": "https://raw.githubusercontent.com/Calinou/free-blue-noise-textures/a64e300dcd96b5f8c42494c5e452c1eb409b0efb/128_128/LDR_RGBA_0.png",
+      "sha256": "e9cc6aa2685a1d089cea5e3560a1a25707dc6f8ff240cff06b4a50e7bd9d22ed",
+      "sizeBytes": 65752,
+      "license": "CC0-1.0",
+      "attribution": "Free blue noise textures by Christoph Peters (momentsingraphics.de); GitHub mirror by Hugo Locurcio",
+      "source": "https://momentsingraphics.de/BlueNoise.html",
+      "scenes": [],
+      "dest": "Content/Assets/BlueNoise"
     }
   ]
 }

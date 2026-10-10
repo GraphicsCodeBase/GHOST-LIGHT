@@ -20,6 +20,15 @@ TextureHandle PassBuilder::create(const std::string& name, const TextureDesc& de
     return {index, false};
 }
 
+const TextureDesc* PassBuilder::find(const std::string& name) const {
+    const auto found = m_graph.m_textureLookup.find(name);
+    if (found == m_graph.m_textureLookup.end()) {
+        return nullptr;
+    }
+    const RenderGraph::Texture& texture = m_graph.m_textures[found->second];
+    return texture.declared ? &texture.desc : nullptr;
+}
+
 TextureHandle PassBuilder::sample(const std::string& name) {
     return m_graph.addTextureAccess(m_pass, name, RenderGraph::Access::Sampled, false);
 }

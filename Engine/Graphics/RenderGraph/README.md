@@ -18,7 +18,7 @@ graph.addPass("Background", PassKind::Compute,
 | Type | What it does |
 |---|---|
 | `RenderGraph` | `reset()`, `declareExternal("swapchain", fmt)`, `addPass(name, kind, setup, execute)`, `setPassEnabled()`, `compile(size, frame)`, `bindExternal(...)`, `execute(cmd, frame, timers)`, `textures()` |
-| `PassBuilder` | `create`, `sample`, `samplePrevious`, `readStorage`, `writeStorage`, `readWriteStorage`, `colorAttachment`, `depthAttachment`, `copySource/Destination`, `createBuffer`, `readBuffer`, `writeBuffer` |
+| `PassBuilder` | `create`, `sample`, `samplePrevious`, `readStorage`, `writeStorage`, `readWriteStorage`, `colorAttachment`, `depthAttachment`, `copySource/Destination`, `createBuffer`, `readBuffer`, `writeBuffer`, `find(name)` (description of a texture an earlier pass created, else nullptr: for optional readers like the texture viewer) |
 | `PassContext` | `cmd()`, `sampledIndex()`, `storageIndex()`, `extent()`, `historyValid()`, `bufferAddress()`, `bindPipeline()`, `pushConstants()`, `dispatchForSize()`, `drawFullscreenTriangle()` |
 | `GraphTypes` | `PassKind` (Raster/Compute/RayTracing/Transfer), `Lifetime` (Transient/Persistent/History), `Scale` (Full/Half/Quarter/Fixed), `TextureDesc`, handles |
 | `GpuTimers` | Timestamps around every pass, read back without stalling (a couple of frames late) |

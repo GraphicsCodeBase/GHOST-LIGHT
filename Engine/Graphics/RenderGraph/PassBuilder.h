@@ -37,6 +37,10 @@ public:
     BufferHandle readBuffer(const std::string& name);
     BufferHandle writeBuffer(const std::string& name);
 
+    // The description of a texture an earlier pass of this graph created (or an external one), else nullptr. For optional
+    // readers such as the texture viewer, which must not reference a texture nothing produces.
+    const TextureDesc* find(const std::string& name) const;
+
 private:
     RenderGraph& m_graph;
     uint32_t m_pass;

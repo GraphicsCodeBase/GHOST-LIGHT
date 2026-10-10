@@ -10,6 +10,7 @@
 | `SceneErrorOverlay` | Bottom panel: scene/prefab errors (red) and warnings (amber) as `file(line): field: message`, with Dismiss |
 | `PerformanceOverlay` | Corner readout: fps, ms, GPU, resolution, render mode + path tracer samples, validation on/off, GPU time per pass |
 | `TechniquePanel` | Techniques window (F2): techniques by category, enable checkbox, `Param<T>` widgets (slider / checkbox / color), Reset |
+| `TextureViewerPanel` | Texture viewer window (F3): any render graph texture (format, size), channels incl. octahedral normals, value range, presets per texture name, inset or full screen. Drawn by `Graphics/Passes/TextureViewerPass` |
 
 Spawn menu and inspector arrive in M0b.
 
