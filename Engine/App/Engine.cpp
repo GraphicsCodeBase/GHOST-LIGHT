@@ -9,12 +9,14 @@
 #include "Graphics/Passes/ReferencePathTracerPass.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
+#include "Graphics/TechniqueRuntime/TechniqueManager.h"
 #include "Platform/Window.h"
 #include "Sandbox/Player/FlyController.h"
 #include "UI/ImGuiLayer.h"
 #include "UI/PerformanceOverlay.h"
 #include "UI/SceneErrorOverlay.h"
 #include "UI/ShaderErrorOverlay.h"
+#include "UI/TechniquePanel.h"
 #include "World/Systems/GpuSceneExtractionSystem.h"
 #include "World/World.h"
 
@@ -131,6 +133,7 @@ int Engine::run() {
         world::SceneLoadResult reload;
         if (m_world->reloadIfChanged(*m_assets, reload)) {
             reportSceneResult(reload, m_world->currentScene());
+            applySceneTechniques();
         }
         m_world->update();
         m_player->update(*m_window, static_cast<float>(m_timer.deltaSeconds()), m_settings.cameraSpeed);
@@ -168,6 +171,9 @@ void Engine::drawUi() {
     ui::PerformanceOverlay::draw(stats);
     ui::ShaderErrorOverlay::draw(m_renderer->pipelines().errors());
     ui::SceneErrorOverlay::draw(m_sceneErrors, m_sceneWarnings);
+    if (m_showTechniques) {
+        ui::TechniquePanel::draw(m_renderer->techniques(), &m_showTechniques);
+    }
     m_ui->endFrame();
 }
 
@@ -176,6 +182,7 @@ bool Engine::loadScene(const std::string& contentPath) {
     reportSceneResult(result, contentPath);
     if (result.loaded) {
         placePlayerAtStart();
+        applySceneTechniques();
         if (m_options.useUserSettings) {
             m_settings.lastScene = contentPath;
         }
@@ -195,6 +202,11 @@ void Engine::placePlayerAtStart() {
         m_player->teleport({0.0f, 1.7f, 5.0f}, 0.0f, 0.0f);
     }
     m_resetCameraHistory = true;
+}
+
+void Engine::applySceneTechniques() {
+    const world::SceneSettings& settings = m_world->settings();
+    m_renderer->techniques().applySettings(settings.techniques, "Content/" + settings.file);
 }
 
 void Engine::updateGpuScene() {
@@ -231,6 +243,9 @@ void Engine::handleGlobalShortcuts() {
     const platform::Input& input = m_window->input();
     if (input.wasPressed(platform::Key::F11)) {
         m_window->toggleFullscreen();
+    }
+    if (input.wasPressed(platform::Key::F2)) {
+        m_showTechniques = !m_showTechniques;
     }
     if (input.wasPressed(platform::Key::F5)) {
         const bool raster = m_renderer->mode() == graphics::Renderer::Mode::Raster;

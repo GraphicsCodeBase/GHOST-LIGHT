@@ -41,6 +41,8 @@ tags: [spec, structure]
 - `World` → Core, Assets, Graphics/GpuScene. Its `GpuSceneExtractionSystem` pushes plain data into `GpuScene`.
 - `Graphics/GpuScene` → Core, Assets (CPU structs only), Graphics/Vulkan. The one Graphics module that sees Assets.
 - `Graphics/RayTracing` → Core, Graphics/Vulkan, Graphics/ShaderCompiler, Graphics/GpuScene. `Graphics/Passes` → RayTracing too.
+- `Graphics/TechniqueRuntime` → Core, Graphics/Vulkan, ShaderCompiler, RenderGraph, GpuScene, RayTracing. `Renderer` → TechniqueRuntime.
+- `Techniques/` (object library `Ghost_Techniques`) → TechniqueRuntime and what it depends on, checked at configure time.
 - `Sandbox/Player` → Core, Platform.
 - `Physics` → World (M0b).
 - `UI` → Graphics, Platform · `DebugTools` → UI, Graphics · `App` → everything.

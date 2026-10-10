@@ -128,6 +128,8 @@ public:
     // Increments whenever anything that changes the rendered image changes (geometry, instances, lights, environment);
     // the camera is not included. Accumulating passes restart when it moves.
     uint64_t sceneRevision() const { return m_sceneRevision; }
+    // Increments whenever the sun or the point/spot light list changes (e.g. rebuild a light sampling table).
+    uint64_t lightRevision() const { return m_lightRevision; }
 
 private:
     struct FrameSlot {
@@ -161,6 +163,7 @@ private:
     vulkan::GpuBuffer m_materialBuffer;
     uint64_t m_geometryRevision = 0;
     uint64_t m_sceneRevision = 0;
+    uint64_t m_lightRevision = 0;
 
     std::vector<TextureUploader::Texture> m_environment;
     glm::vec3 m_environmentAverage{0.0f};

@@ -64,6 +64,7 @@ private:
     void drawUi();
     void reportSceneResult(const world::SceneLoadResult& result, const std::string& contentPath);
     void placePlayerAtStart();
+    void applySceneTechniques();
     void updateGpuScene();
     void saveUserSettings();
 
@@ -78,6 +79,7 @@ private:
     std::unique_ptr<world::GpuSceneExtractionSystem> m_extraction;
     std::unique_ptr<sandbox::FlyController> m_player;
     bool m_resetCameraHistory = true; // no motion vectors across a teleport
+    bool m_showTechniques = true;     // Techniques panel (F2)
     std::vector<std::string> m_sceneErrors;   // shown by SceneErrorOverlay until dismissed
     std::vector<std::string> m_sceneWarnings;
     uint64_t m_framesRun = 0;

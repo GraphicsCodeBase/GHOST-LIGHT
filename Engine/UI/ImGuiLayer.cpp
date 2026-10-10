@@ -116,7 +116,9 @@ void ImGuiLayer::beginFrame() {
     // Panels can dock to the screen edges; the middle stays see-through so the scene is visible.
     ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
     const ImGuiIO& io = ImGui::GetIO();
-    m_window->input().setUiCapture(io.WantCaptureKeyboard, io.WantCaptureMouse);
+    // Keyboard: only while typing into a text field. A focused panel must not swallow WASD or the F-key shortcuts.
+    // Mouse: while the cursor is over a panel (clicks and drags go to the UI, not the camera).
+    m_window->input().setUiCapture(io.WantTextInput, io.WantCaptureMouse);
 }
 
 void ImGuiLayer::endFrame() {

@@ -14,6 +14,7 @@
 #include "Graphics/RenderGraph/RenderGraph.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Graphics/ShaderCompiler/ShaderCompiler.h"
+#include "Graphics/TechniqueRuntime/TechniqueManager.h"
 #include "Graphics/Vulkan/BindlessDescriptors.h"
 #include "Graphics/Vulkan/DeletionQueue.h"
 #include "Graphics/Vulkan/Device.h"
@@ -93,6 +94,8 @@ bool Renderer::initialize(platform::Window& window, const Desc& desc) {
     m_pathTracer->initialize(*m_pipelines, *m_device, *m_deletionQueue);
     m_tonemap = std::make_unique<passes::TonemapPass>();
     m_tonemap->initialize(*m_pipelines, m_swapchain->format());
+    m_techniques = std::make_unique<techniques::TechniqueManager>();
+    m_techniques->initialize(*m_pipelines, *m_device, *m_deletionQueue);
     buildRenderGraph();
 
     m_initialized = true;
@@ -107,9 +110,17 @@ void Renderer::buildRenderGraph() {
     graph.addPass(
         "TLAS", rendergraph::PassKind::Compute, [](rendergraph::PassBuilder&) {},
         [this](rendergraph::PassContext& ctx) { m_accelerationStructures->recordTlasBuild(ctx.cmd(), m_frames->slot(), *m_gpuScene); });
-    m_gbuffer->addTo(graph, *m_gpuScene);
-    m_lighting->addTo(graph, *m_gpuScene);
-    m_pathTracer->addTo(graph, *m_gpuScene);
+    if (m_mode == Mode::Raster) {
+        // Techniques slot in around the engine's lighting by stage (Graphics/TechniqueRuntime/README.md).
+        m_gbuffer->addTo(graph, *m_gpuScene);
+        m_techniques->addPasses(graph, *m_gpuScene, techniques::TechniqueStage::PreLighting);
+        m_lighting->addTo(graph, *m_gpuScene);
+        m_techniques->addPasses(graph, *m_gpuScene, techniques::TechniqueStage::Lighting);
+        m_techniques->addPasses(graph, *m_gpuScene, techniques::TechniqueStage::Denoise);
+        m_techniques->addPasses(graph, *m_gpuScene, techniques::TechniqueStage::Post);
+    } else {
+        m_pathTracer->addTo(graph, *m_gpuScene); // the reference stays free of techniques
+    }
     m_tonemap->addTo(graph, kSwapchain);
     graph.addPass(
         "UI", rendergraph::PassKind::Raster,
@@ -125,15 +136,18 @@ void Renderer::buildRenderGraph() {
         [source](rendergraph::PassBuilder& builder) { *source = builder.copySource(kSwapchain); },
         [this, source](rendergraph::PassContext& ctx) { recordCapture(ctx.cmd(), ctx.image(*source)); });
     graph.setPassEnabled("Capture", false);
-    setMode(m_mode);
+    m_graphDirty = false;
 }
 
 void Renderer::setMode(Mode mode) {
+    if (mode == m_mode) {
+        return;
+    }
     m_mode = mode;
-    const bool raster = mode == Mode::Raster;
-    m_graph->setPassEnabled("GBuffer", raster);
-    m_graph->setPassEnabled("Lighting", raster);
-    m_graph->setPassEnabled("PathTracer", !raster);
+    m_graphDirty = true; // rebuilt before the next frame records
+    if (mode == Mode::PathTraced) {
+        m_pathTracer->resetAccumulation(); // the accumulation texture may have been released while rasterizing
+    }
 }
 
 void Renderer::waitIdle() const {
@@ -146,6 +160,7 @@ void Renderer::shutdown() {
     waitIdle();
     deliverCaptureIfReady(/*gpuIdle*/ true);
     // Reverse creation order: everything that lives on the device goes before the device, the surface before the instance.
+    m_techniques.reset();
     m_tonemap.reset();
     m_pathTracer.reset();
     m_lighting.reset();
@@ -249,6 +264,10 @@ void Renderer::renderFrame(const OverlayRecorder& overlay) {
     const uint64_t thisFrame = m_frames->frameNumber() + 1; // the timeline value this submit will signal
     m_gpuScene->prepareFrame(m_frames->slot(), thisFrame, extent, thisFrame);
     m_tonemap->exposure = m_gpuScene->exposure();
+    // Enabling/disabling a technique or switching modes changes the pass list.
+    if (m_techniques->enabledStateChanged() || m_graphDirty) {
+        buildRenderGraph();
+    }
     m_graph->compile(extent, m_frames->frameNumber());
     m_graph->bindExternal(kSwapchain, m_swapchain->image(imageIndex), m_swapchain->view(imageIndex), extent, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     m_overlay = overlay;

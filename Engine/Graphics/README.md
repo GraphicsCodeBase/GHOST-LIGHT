@@ -15,4 +15,4 @@ Physics: the build rejects such includes, so techniques can't reach the ECS even
 | [GpuScene](GpuScene/README.md) | Global geometry/material buffers, bindless textures, per-frame instances/lights/frame constants | M0a step 6 ✅ |
 | [RayTracing](RayTracing/README.md) | BLAS per mesh (compacted), TLAS per frame, shader binding tables, hot-reloadable RT pipelines | M0a step 7 ✅ |
 | [Passes](Passes/README.md) | G-buffer, placeholder lighting, tonemap, naive reference path tracer | M0a steps 3–7 ✅ |
-| TechniqueRuntime | Technique base class, registry, `Param<T>` | M0a step 8 |
+| [TechniqueRuntime](TechniqueRuntime/README.md) | Technique base class, registry, `Param<T>`, builder/context, stage ordering, scene settings | M0a step 8 ✅ |

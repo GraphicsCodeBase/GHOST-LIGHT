@@ -1,6 +1,6 @@
 # App
 **Purpose:** wires the modules together and runs the frame loop; builds `GhostLight.exe`.
-**Owns:** startup order, the main loop, global shortcuts (F5 raster ↔ reference path tracer, F11 fullscreen, F12 screenshot), saving user settings on exit.
+**Owns:** startup order, the main loop, global shortcuts (F2 techniques panel, F5 raster ↔ reference path tracer, F11 fullscreen, F12 screenshot), applying a scene's technique settings on load, saving user settings on exit.
 
 **Public API**
 - `Engine`: `initialize()` (paths → log → settings → window → renderer → UI → assets/world → scene; returns false with

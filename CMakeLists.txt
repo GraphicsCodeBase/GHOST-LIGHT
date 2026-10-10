@@ -1,4 +1,4 @@
-# GHOST LIGHT root build: compiler settings, pinned third-party targets, engine modules and tests.
+# GHOST LIGHT root build: compiler settings, pinned third-party targets, engine modules, techniques and tests.
 # Configure through run.bat, which downloads the dependencies into .tools/ and loads the VS environment first.
 cmake_minimum_required(VERSION 3.25)
 project(GhostLight VERSION 0.1.0 LANGUAGES C CXX)
@@ -9,4 +9,5 @@ include(Dependencies)
 include(GhostModule)
 
 add_subdirectory(Engine)
+add_subdirectory(Techniques)
 add_subdirectory(Tests)

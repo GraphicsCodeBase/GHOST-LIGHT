@@ -43,6 +43,10 @@ namespace ghost::graphics::raytracing {
 class SceneAccelerationStructures;
 }
 
+namespace ghost::graphics::techniques {
+class TechniqueManager;
+}
+
 namespace ghost::graphics::passes {
 class GBufferPass;
 class LightingPass;
@@ -54,7 +58,7 @@ namespace ghost::graphics {
 
 class Renderer {
 public:
-    // Raster: G-buffer + placeholder lighting (techniques plug in here from step 8).
+    // Raster: G-buffer + placeholder lighting + enabled techniques (by stage).
     // PathTraced: the naive reference path tracer, accumulating while nothing changes.
     enum class Mode { Raster, PathTraced };
 
@@ -103,6 +107,8 @@ public:
     scene::GpuScene& gpuScene() { return *m_gpuScene; }
     const raytracing::SceneAccelerationStructures& accelerationStructures() const { return *m_accelerationStructures; }
     passes::ReferencePathTracerPass& pathTracer() { return *m_pathTracer; }
+    // Every registered technique; toggling one rebuilds the render graph before the next frame.
+    techniques::TechniqueManager& techniques() { return *m_techniques; }
 
     void setMode(Mode mode);
     Mode mode() const { return m_mode; }
@@ -131,7 +137,9 @@ private:
     std::unique_ptr<passes::LightingPass> m_lighting;
     std::unique_ptr<passes::ReferencePathTracerPass> m_pathTracer;
     std::unique_ptr<passes::TonemapPass> m_tonemap;
+    std::unique_ptr<techniques::TechniqueManager> m_techniques;
     Mode m_mode = Mode::Raster;
+    bool m_graphDirty = false;
 
     OverlayRecorder m_overlay;
     // Frame capture: requested -> recorded into a frame -> delivered when that frame completes on the GPU.

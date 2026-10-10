@@ -9,6 +9,9 @@
 #include "Graphics/GpuScene/GpuScene.h"
 #include "Graphics/Passes/ReferencePathTracerPass.h"
 #include "Graphics/RayTracing/SceneAccelerationStructures.h"
+#include "Graphics/TechniqueRuntime/Param.h"
+#include "Graphics/TechniqueRuntime/Technique.h"
+#include "Graphics/TechniqueRuntime/TechniqueManager.h"
 #include "Graphics/Renderer/Renderer.h"
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
@@ -24,6 +27,7 @@
 #include <vector>
 
 #include <glm/geometric.hpp>
+#include <nlohmann/json.hpp>
 
 namespace {
 
@@ -245,6 +249,64 @@ struct PathTracerCheck {
     }
 };
 
+// Techniques: the example and the template are compiled in and registered, scene-style settings reach their params,
+// and enabling them adds passes that really run (their GPU timings appear).
+struct TechniqueCheck {
+    std::string failure = "never ran";
+
+    static ghost::graphics::techniques::ParamBase* param(ghost::graphics::techniques::Technique& technique, const std::string& key) {
+        for (auto* candidate : technique.params()) {
+            if (candidate->key() == key) {
+                return candidate;
+            }
+        }
+        return nullptr;
+    }
+
+    static bool hasTiming(ghost::graphics::Renderer& renderer, const std::string& pass) {
+        for (const auto& timing : renderer.gpuTimings()) {
+            if (timing.name == pass) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void step(ghost::app::Engine& engine, uint64_t frame) {
+        auto& techniques = engine.renderer().techniques();
+        if (frame == 45) {
+            auto* normals = techniques.find("RayQueryNormals");
+            auto* templateTechnique = techniques.find("TechniqueName");
+            if (!normals || !templateTechnique) {
+                failure = "RayQueryNormals or the _Template technique is not registered";
+                return;
+            }
+            techniques.applySettings(nlohmann::json::parse(R"({
+                "RayQueryNormals": { "enabled": true, "params": { "blend": 0.75, "geometricNormals": true } },
+                "TechniqueName": { "enabled": true, "params": { "strength": 0.5, "tint": [1.0, 0.5, 0.25] } }
+            })"),
+                                     "smoke test");
+            auto* blend = param(*normals, "blend");
+            auto* geometric = param(*normals, "geometricNormals");
+            if (!normals->enabled || !blend || *static_cast<float*>(blend->data()) != 0.75f || !geometric ||
+                !*static_cast<bool*>(geometric->data())) {
+                failure = "technique settings did not reach the params";
+                return;
+            }
+        } else if (frame == 55) {
+            auto& renderer = engine.renderer();
+            if (!hasTiming(renderer, "RayQueryNormals") || !hasTiming(renderer, "TechniqueName")) {
+                failure = "enabled techniques did not run (no GPU timings for their passes)";
+                return;
+            }
+            ghost::debugtools::FrameCapture::requestPng(renderer, ghost::core::Paths::build() / "SmokeTest" / "RayQueryNormals.png");
+        } else if (frame == 60 && failure == "never ran") {
+            techniques.applySettings(nlohmann::json::object(), "smoke test"); // back to defaults: all disabled
+            failure.clear();
+        }
+    }
+};
+
 } // namespace
 
 int main() {
@@ -252,6 +314,7 @@ int main() {
     SceneCheck sceneCheck;
     PlayerCheck playerCheck;
     PathTracerCheck pathTracerCheck;
+    TechniqueCheck techniqueCheck;
     std::filesystem::path capturePath;
     size_t passTimings = 0;
     ghost::app::EngineOptions options;
@@ -270,6 +333,7 @@ int main() {
         sceneCheck.step(engine, frame);
         playerCheck.step(engine, frame);
         pathTracerCheck.step(engine, frame);
+        techniqueCheck.step(engine, frame);
         if (frame == 200) {
             // The last rendered image, kept for inspection: Build/SmokeTest/LastFrame.png.
             capturePath = ghost::core::Paths::build() / "SmokeTest" / "LastFrame.png";
@@ -307,6 +371,10 @@ int main() {
     const bool scenesOk = sceneCheck.failures.empty() && sceneCheck.scenesLoaded >= 2;
     const bool playerOk = playerCheck.failure.empty();
     const bool pathTracerOk = pathTracerCheck.failure.empty();
+    const bool techniquesOk = techniqueCheck.failure.empty();
+    if (!techniquesOk) {
+        std::printf("technique check FAILED: %s\n", techniqueCheck.failure.c_str());
+    }
     if (!pathTracerOk) {
         std::printf("path tracer check FAILED: %s\n", pathTracerCheck.failure.c_str());
     }
@@ -319,7 +387,7 @@ int main() {
     std::printf("scenes: %zu shipped scene(s) loaded cleanly\n", sceneCheck.scenesLoaded);
     const int errors = ghost::core::Log::errorCount();
     const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk &&
-                        scenesOk && playerOk && pathTracerOk;
+                        scenesOk && playerOk && pathTracerOk && techniquesOk;
     std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, capture %s, GPU timers %zu passes, "
                 "engine exit code %d -> %s\n",
                 static_cast<unsigned long long>(frames), static_cast<unsigned long long>(kFramesToRun), errors,

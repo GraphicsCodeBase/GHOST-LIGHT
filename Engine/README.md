@@ -17,6 +17,7 @@
 | [Graphics/GpuScene](Graphics/GpuScene/README.md) | Scene geometry/materials/textures/instances/lights in GPU buffers | Core, Assets, Graphics/Vulkan |
 | [Graphics/RayTracing](Graphics/RayTracing/README.md) | BLAS/TLAS, shader binding tables, RT pipelines | Core, Graphics/Vulkan, ShaderCompiler, GpuScene |
 | [Graphics/Passes](Graphics/Passes/README.md) | Built-in render passes + their shaders | Core, Graphics/Vulkan, ShaderCompiler, RenderGraph, GpuScene, RayTracing |
+| [Graphics/TechniqueRuntime](Graphics/TechniqueRuntime/README.md) | Technique base class, `Param<T>`, registry, technique passes | Core, Graphics/Vulkan, ShaderCompiler, RenderGraph, GpuScene, RayTracing |
 | [Graphics/Renderer](Graphics/Renderer/README.md) | Per-frame orchestration | Core, Platform, Graphics/* |
 | [World](World/README.md) | EnTT world, components, systems, scene/prefab JSON loading, ECS → GPU scene extraction | Core, Assets, Graphics/GpuScene, EnTT |
 | [Sandbox/Player](Sandbox/Player/README.md) | Fly camera (walk mode in M0b) | Core, Platform |

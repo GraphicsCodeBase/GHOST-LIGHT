@@ -11,11 +11,12 @@ passes, and their order of creation and destruction.
   BLASes if geometry changed, then acquire → `gpuScene.prepareFrame()` → render graph → submit (timeline + present
   semaphores) → present.
 - `setMode(Mode::Raster | Mode::PathTraced)` (F5 in the app), `pathTracer()` (sample count, bounces),
-  `accelerationStructures()`.
+  `accelerationStructures()`, `techniques()`. Mode switches and technique toggles rebuild the graph before the next frame.
 - `requestCapture(callback)` (screenshots), `gpuTimings()`, `gpuFrameMilliseconds()`, `validationActive()`, `gpuName()`.
 
-Render graph today: **TLAS → GBuffer → Lighting → Tonemap → UI** (raster) or **TLAS → PathTracer → Tonemap → UI**
-(path traced), → Capture when requested. Techniques slot in between Lighting and Tonemap from step 8.
+Render graph today: **TLAS → GBuffer → [PreLighting] → Lighting → [Lighting] → [Denoise] → [Post] → Tonemap → UI**
+(raster; brackets = enabled techniques of that stage) or **TLAS → PathTracer → Tonemap → UI** (path traced), → Capture
+when requested.
 
-**Depends on:** Core, Platform, Graphics/Vulkan, ShaderCompiler, RenderGraph, GpuScene, RayTracing, Passes.
+**Depends on:** Core, Platform, Graphics/Vulkan, ShaderCompiler, RenderGraph, GpuScene, RayTracing, Passes, TechniqueRuntime.
 **Not responsible for:** window events (Platform), deciding what to draw (World → GpuScene), technique logic (Techniques/).

@@ -15,7 +15,7 @@ tags: [roadmap]
 ### Checklist
 - [ ] Folder structure exactly per [[14 Project Structure]], module READMEs, per-module CMake targets
 - [x] `run.bat` (`release`, `test`, `clean`), bootstrap into `.tools/`, clear error messages ([[15 Setup and Portability]])
-- [ ] `new_technique.bat` + `Techniques/_Template/`
+- [x] `new_technique.bat` + `Techniques/_Template/`
 - [x] Root-relative path system (`Core`), `User/settings.json` auto-created
 - [x] Window, input, fly camera
 - [x] Vulkan 1.3 via volk, RT extensions, validation layers from `.tools/`, debug names
@@ -24,12 +24,12 @@ tags: [roadmap]
 - [x] EnTT world + core components (`Transform`, `Name`, `MeshRenderer`, lights, `Camera`)
 - [x] JSON **scene loading** (entities, prefabs, lights, environment, technique settings)
 - [x] glTF loading → asset registry → GPU scene extraction from ECS
-- [ ] BLAS per mesh, TLAS per frame, SBT builder, ray query (all ✅ but ray query, which the step 8 example exercises)
+- [x] BLAS per mesh, TLAS per frame, SBT builder, ray query
 - [x] G-buffer incl. motion vectors and entity ID
 - [x] Placeholder lighting (sun, no shadows) + tonemap + present
 - [x] Naive reference path tracer with accumulation (`RTG-TODO` stubs)
-- [ ] Technique API, auto-registration, auto ImGui params
-- [ ] Example technique (not RTG): "visualize normals via ray query"
+- [x] Technique API, auto-registration, auto ImGui params
+- [x] Example technique (not RTG): "visualize normals via ray query"
 - [x] Slang hot-reload + **error overlay** (last good shader keeps running)
 - [ ] GPU timers per pass, texture viewer
 - [ ] Asset manifest + starter assets ([[09 Assets#Starter set]])

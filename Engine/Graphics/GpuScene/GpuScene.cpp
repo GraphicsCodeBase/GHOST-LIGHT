@@ -332,6 +332,7 @@ void GpuScene::setLights(const SunInput& sun, std::vector<GpuLight> lights) {
         lights.size() != m_lights.size() || std::memcmp(lights.data(), m_lights.data(), lights.size() * sizeof(GpuLight)) != 0;
     if (sunChanged || lightsChanged) {
         ++m_sceneRevision;
+        ++m_lightRevision;
     }
     m_sun = sun;
     m_lights = std::move(lights);
