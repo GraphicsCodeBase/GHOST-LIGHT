@@ -39,7 +39,7 @@ A C++/Vulkan ray tracing sandbox for implementing techniques from **Ray Tracing 
 | 14 | [[14 Project Structure]] | Folder layout, module rules, dependency direction |
 | 15 | [[15 Setup and Portability]] | `run.bat`, requirements, path rules |
 | 16 | [[16 Sandbox, ECS and Scenes]] | ECS components, scene/prefab JSON, physics, sandbox tools, player modes |
-| 17 | `17 RT Plumbing Explainer` | *Written by Claude after M0a* |
+| 17 | [[17 RT Plumbing Explainer]] | BLAS/TLAS, SBT layout, one `traceRays` call, ray query vs pipeline, 10 interview questions |
 | 18 | [[18 Session Log]] | **Where we left off.** Updated at the end of every session |
 
 ## 🧩 Templates

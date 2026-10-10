@@ -27,6 +27,25 @@ tags: [log, handoff]
 
 ---
 
+## 2026-10-10 (day 2): M0a complete: steps 5–9 (world, GPU scene, ray tracing, technique API, debug tools)
+**Milestone:** M0a ✅   **Branch:** m0a-core (pushed)   **Last commit:** see `git log` (docs: M0a complete)
+**Done this session:**
+- Step 5: EnTT world, JSON scenes (file(line) errors), glTF/HDR import, asset manifest (Sponza, Damaged Helmet, Kloofendal)
+- Step 6: GPU scene, G-buffer (motion vectors, entity IDs), placeholder lighting, fly camera, EV100 exposure
+- Step 7: compacted BLAS per mesh, TLAS per frame in flight, RT pipelines + SBT, naive reference path tracer (F5)
+- Step 8: Technique API (`Param<T>`, registry, builder/context, 4 stages, scene settings), panel (F2), `new_technique.bat`, RayQueryNormals example
+- Step 9: texture viewer (F3), blue noise (manifest + `Random.blueNoise`), [[17 RT Plumbing Explainer]], README audit, portability test
+**Where we left off:**
+- Every M0a roadmap item ticked. `run.bat test` passes (240 frames, 0 validation errors).
+- Portability: fresh clone into a path with spaces built and passed the smoke test with no edits (Vulkan SDK variables stripped by `run.bat`). The validation-layer zip was seeded into the clone's download cache because the GitHub release doesn't exist yet.
+**Next steps:**
+1. Discuss with the user which RTG techniques to build first and which showcase scenes to add (agreed plan, before any technique work)
+2. M0b (Jolt physics sandbox) when the user wants it; merge `m0a-core` → `main` after the user's review
+**Open issues / blockers:**
+- User to-do: create GitHub release `deps-validation-layers-1.4.357.0` with `Build/ValidationLayers/validation-layers-1.4.357.0-win64.zip`. Fresh clones elsewhere need it.
+- Integer textures (`gbuffer.entityId`) aren't viewable in the texture viewer yet.
+**Decisions made:** (also added to [[12 Decisions Log]])
+- Blue noise via manifest + golden-ratio animation; texture viewer as a render graph pass + F3 panel; `PassBuilder::find`
 ## 2026-10-10 (night): M0a steps 0–4 done — run.bat, Vulkan core, Slang hot reload, render graph
 **Milestone:** M0a   **Branch:** m0a-core (pushed)   **Last commit:** d39d623 graphics: add render graph with automatic barriers, GPU timers and tonemap
 **Done this session:**

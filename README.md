@@ -6,8 +6,9 @@ A C++20 / Vulkan real-time ray tracing sandbox for implementing techniques from
 *Ray Tracing Gems* I & II, with an ECS, Jolt physics, and a Garry's Mod-style
 sandbox to spawn and interact with objects.
 
-> **Status:** building milestone M0a (renderer core). `run.bat` builds and starts the engine: Sponza in a raster
-> G-buffer with placeholder lighting, and a naive reference path tracer on **F5**.
+> **Status:** milestone **M0a (renderer core) complete**. `run.bat` builds and starts the engine: Sponza in a raster
+> G-buffer with placeholder lighting, a naive reference path tracer on **F5**, the technique API (`new_technique.bat`,
+> panel on **F2**) and a texture viewer on **F3**. Next: M0b (physics sandbox).
 > The specification lives in [`Design_Vault/`](Design_Vault/) (open the repo folder as an Obsidian vault).
 
 ## Requirements (install once per machine)
@@ -54,6 +55,12 @@ Later runs only rebuild what changed and start in seconds.
 | **F3** | Texture viewer: show any G-buffer target or technique output on screen |
 | **F5** | Raster ↔ reference path tracer (accumulates while the camera stands still) |
 | **F11** / **F12** | Fullscreen / screenshot to `Captures/` |
+
+## Working in Visual Studio
+
+Run `run.bat` once, then **File → Open → Folder** on the repo: Visual Studio picks up `CMakeLists.txt`. Choose
+`GhostLight.exe` as the startup item and press **F5** to debug. The entry point is `Engine/App/Main.cpp` → `Engine::run()`;
+[`Engine/README.md`](Engine/README.md) maps every module. `run.bat test` stays the check before committing.
 
 ## Repository layout
 

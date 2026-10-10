@@ -13,7 +13,7 @@ tags: [roadmap]
 **Goal:** a fresh clone → `run.bat` → Sponza on screen with ray tracing working end-to-end, so I could already write a technique.
 
 ### Checklist
-- [ ] Folder structure exactly per [[14 Project Structure]], module READMEs, per-module CMake targets
+- [x] Folder structure exactly per [[14 Project Structure]], module READMEs, per-module CMake targets
 - [x] `run.bat` (`release`, `test`, `clean`), bootstrap into `.tools/`, clear error messages ([[15 Setup and Portability]])
 - [x] `new_technique.bat` + `Techniques/_Template/`
 - [x] Root-relative path system (`Core`), `User/settings.json` auto-created
@@ -34,17 +34,17 @@ tags: [roadmap]
 - [x] GPU timers per pass, texture viewer
 - [x] Asset manifest + starter assets ([[09 Assets#Starter set]])
 - [x] Blue noise textures in `ShaderLibrary`
-- [ ] Smoke test (`run.bat test`)
-- [ ] Root README requirements kept accurate, `.gitignore`, git initialized
+- [x] Smoke test (`run.bat test`)
+- [x] Root README requirements kept accurate, `.gitignore`, git initialized
 
 ### Acceptance criteria
-- [ ] **Portability test:** fresh clone into a path **with spaces**, on a machine **without the Vulkan SDK** → double-click `run.bat` → engine runs. No edits.
-- [ ] Sponza scene loads from `Content/Scenes/Sponza.scene.json`, 1080p, smooth camera, **zero validation errors**
-- [ ] Reference mode converges on Cornell box and Sponza
-- [ ] Breaking a shader shows the error overlay, fixing it recovers, with no restart
-- [ ] `new_technique.bat Shadows Test` creates a technique that builds and appears in the UI with no other edits
-- [ ] Every folder has a README, every file a purpose comment, no loose files
-- [ ] `run.bat test` passes
+- [x] **Portability test:** fresh clone into a path **with spaces**, on a machine **without the Vulkan SDK** → double-click `run.bat` → engine runs. No edits.
+- [x] Sponza scene loads from `Content/Scenes/Sponza.scene.json`, 1080p, smooth camera, **zero validation errors**
+- [x] Reference mode converges on Cornell box and Sponza
+- [x] Breaking a shader shows the error overlay, fixing it recovers, with no restart
+- [x] `new_technique.bat Shadows Test` creates a technique that builds and appears in the UI with no other edits
+- [x] Every folder has a README, every file a purpose comment, no loose files
+- [x] `run.bat test` passes
 
 ### Deliverable: `17 RT Plumbing Explainer.md`
 ≤2 pages on **this engine's** RT plumbing: BLAS vs TLAS (rebuild vs refit, links to code), SBT layout diagram, the lifecycle of one `traceRays`, ray query vs RT pipeline, and 10 likely interview questions with answers.
@@ -74,7 +74,7 @@ tags: [roadmap]
 - [ ] Spawn a light orb and the lighting updates immediately
 - [ ] Save → restart → reload gives an identical scene
 - [ ] Walk mode collides with the scene; V toggles back to fly
-- [ ] `run.bat test` passes
+- [x] `run.bat test` passes
 
 ---
 
