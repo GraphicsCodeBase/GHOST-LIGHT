@@ -110,4 +110,6 @@ tags: [decisions]
 | 2026-10-10 | `PassBuilder::find(name)` lets optional readers check what earlier passes of this graph produce | Choosing a texture that a mode switch or a disabled technique removed draws nothing instead of logging a render graph error |
 | 2026-10-10 | Integer textures (`gbuffer.entityId`, R32_UINT) are **not viewable yet** | Would need a second, `uint`-typed bindless array; picking (M0b) is the first real user of entity IDs |
 | 2026-10-10 | Texture viewer code lives in `Graphics/Passes` + `UI`, not `DebugTools` | It is a pass and a panel; DebugTools stays the home of capture/metrics/benchmark tooling ([[14 Project Structure]] note updated) |
+| 2026-10-11 | Technique order **M1 shadows → M2 MIS path tracer → M4 ReSTIR → M5 denoising → M3 reflections**; M6 stretch; M0b built by Claude in parallel, before M4's demo | Each milestone feeds the next (blue noise, MIS, then denoising their output); reflections are more visible to recruiters than a radiance cache |
+| 2026-10-11 | Study method: chapter → joint breakdown → user writes code → Claude reviews, tests, builds tooling → verify vs reference → write-up + debugging log | Learning is the point; AI accelerates review and debugging, not authorship of techniques |
 See also: [[13 Open Questions]]

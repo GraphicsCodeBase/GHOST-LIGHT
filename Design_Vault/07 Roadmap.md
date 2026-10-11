@@ -78,6 +78,13 @@ tags: [roadmap]
 
 ---
 
+> [!important] Technique order (agreed 2026-10-11)
+> **M1 → M2 → M4 → M5 → M3** (reflections take the last slot; M6 radiance cache is a stretch goal). Claude builds M0b
+> during overnight runs while I work on M1; M0b must land before the M4 demo (live light orbs).
+> **Method per technique:** 1) read the chapter, 2) break the algorithm down together (Claude explains, I summarize back),
+> 3) I write the code, 4) Claude reviews it and builds tests/comparison tooling, 5) verify in GHOST LIGHT against the
+> reference path tracer, 6) write-up + debugging log.
+
 ## M1 — Ray Traced Shadows (me)
 **Read:** RTG1 ch.6, ch.13 · RTG2 ch.24 (+ ch.4)
 - [ ] Robust self-intersection offset (replace the `RTG-TODO`)

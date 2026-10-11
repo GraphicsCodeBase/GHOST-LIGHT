@@ -21,6 +21,12 @@ tags: [portfolio]
 - Ready to whiteboard: RIS/ReSTIR, SVGF, ray cones, BLAS/TLAS/SBT (`17 RT Plumbing Explainer`).
 - Bonus talking points: ECS-driven GPU scene extraction, dynamic TLAS updates, motion vectors for physics objects.
 
+## AI-accelerated workflow (a selling point, stated honestly)
+- README split: *engine infrastructure AI-assisted (specified and reviewed by me); techniques implemented by me.*
+- Each technique README keeps a **debugging log**: bug → how AI helped find it → root cause in my own words.
+- Story: AI built the iteration tools (hot reload, smoke test, texture viewer, reference path tracer, automated
+  comparisons) so each technique iteration takes seconds, and AI reviews/debugs my technique code. It never writes it.
+
 ## Publishing
 - Public GitHub repo
 - Portfolio page (see [[13 Open Questions]])
