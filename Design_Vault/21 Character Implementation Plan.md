@@ -13,7 +13,8 @@ tags: [plan, character]
 > `localMatrix` ✅ written · next: `computeGlobalPose` → `sampleVec3`/`sampleQuat` → `computeSkinningMatrices`.
 > After each: `.\run.bat test` (the `rest-pose hierarchy error` line must stay < 1e-4) → "done with X" in the study session.
 
-**Three tracks**
+### Three tracks
+
 ```
 CHARACTER FEATURE TRACK (branch: character)
 ├── Study track    (study session, branch character-study)  → learn the concept first
@@ -21,7 +22,8 @@ CHARACTER FEATURE TRACK (branch: character)
 └── Content track  (me + AI tools, later)                   → my original character
 ```
 
-**Stages**
+### Stages
+
 | Stage | Goal | Status |
 |---|---|---|
 | **1 Skinning + BLAS refit** | A character animates, in raster and ray tracing | 🟡 in progress |
@@ -32,7 +34,8 @@ CHARACTER FEATURE TRACK (branch: character)
 | 6 Skin + suit shading | The Eve-style look | ⬜ |
 | 7 Bedroom showcase | Final scene and comparison shots | ⬜ |
 
-**Stage 1 steps**
+### Stage 1 steps
+
 | # | Step | Who | Status |
 |---|---|---|---|
 | 1a | Study notes 01–06 | Me + study session | 🟡 |
@@ -42,7 +45,8 @@ CHARACTER FEATURE TRACK (branch: character)
 | 1e | My `skinVertex` shader function (LBS on the GPU) | Me | ⬜ comes with 1d |
 | 1f | CesiumMan walks in raster + path tracer → PR into `main` | Both | ⬜ |
 
-**One frame, top to bottom**
+### One frame, top to bottom
+
 ```
  FILE: CesiumMan.gltf   (loaded once)
    ▼
@@ -75,7 +79,8 @@ CHARACTER FEATURE TRACK (branch: character)
  └───────────────────────────────────────────────────────┘
 ```
 
-**What each of my functions unlocks**
+### What each of my functions unlocks
+
 - `computeGlobalPose` → the smoke test's hierarchy check tests my math for real
 - `sampleVec3` / `sampleQuat` → the skeleton **walks** in F4
 - `computeSkinningMatrices` → nothing visible yet; feeds step 1d
@@ -108,6 +113,7 @@ New modules: `Engine/Animation/` (CPU only, Core + Assets), `Graphics/Deformatio
 buffers), `Techniques/Character/` (skin, suit, hair shading).
 
 ## Engine changes (Claude)
+
 | Gap today | Change |
 |---|---|
 | `NodeData` keeps only mesh nodes, flattened to model space | Full node tree: parent + local TRS |
@@ -157,6 +163,7 @@ buffers), `Techniques/Character/` (skin, suit, hair shading).
 - [ ] Props (CC0 / AI-generated), window light, bookmarks, style comparison shots (best after M1, M5, M6)
 
 ## Reading list
+
 | Stage | Read |
 |---|---|
 | 1 | glTF 2.0 spec (*Skins*, *Animations*); Gregory, *Game Engine Architecture* (Animation Systems); Jacobson et al., *Skinning: Real-time Shape Deformation* (SIGGRAPH 2014 course); NVIDIA RT best practices (refit vs rebuild) |
