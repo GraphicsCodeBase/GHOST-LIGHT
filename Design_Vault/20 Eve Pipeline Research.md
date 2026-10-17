@@ -50,6 +50,65 @@ sculpts made team communication easier [W2][G3]. Physical-first pipelines are a 
 
 ---
 
+## Character components
+A hero character is ~23 kinds of component. Shift Up hasn't published Eve's exact breakdown, so the list is the typical
+AAA setup (🔶) with what's confirmed for Eve marked ✅. **Tier 1** = covered by this project's first tier (✔ yes,
+◐ partly, ✗ no). This is the checklist for the final presentation: which components I covered, and how well.
+
+### Content (what artists build)
+
+| # | Component | What it involves | Eve | Tier 1 |
+|---|---|---|---|---|
+| 1 | Body mesh | Scan or sculpt → game topology → UVs | ✅ scanned real model [P1] | ✔ base mesh |
+| 2 | Head / face mesh | Densest, most-polished mesh | ✅ made in-house [P1] | ◐ base mesh face |
+| 3 | Eyes | Cornea, iris, sclera, tear line, shadow shell | 🔶 | ✗ |
+| 4 | Teeth, tongue, mouth | Visible when talking | 🔶 | ✗ |
+| 5 | Eyebrows, eyelashes | Small hair cards | 🔶 | ◐ |
+| 6 | Hair | Layered cards + textures + bone chains | ✅ ~1 year extra by the director's estimate [S1] | ✔ |
+| 7 | Outfits | Meshes, materials, physics per outfit | ✅ real clothes scanned [G2] | ◐ one suit |
+| 8 | Accessories, weapon | Extra meshes | 🔶 | ✗ |
+| 9 | Texture maps | Albedo, normal, roughness, AO, cavity, thickness/SSS, pore detail normal, masks (6–10 per material) | 🔶 | ◐ core maps + thickness |
+| 10 | LODs | Cheaper versions for distance | 🔶 | ✗ |
+| 11 | Skeleton | Body, fingers, face + secondary bones (often 150–300+) | 🔶 | ◐ body + secondary |
+| 12 | Skin weights | Which bones move each vertex | 🔶 | ✔ |
+| 13 | Blendshapes | Expressions + joint correctives | 🔶 | ✗ (Tier 2–3) |
+| 14 | Animations | Hundreds to thousands of clips | ✅ ballet / gymnastics style [W1] | ◐ idle/walk/run/jump |
+| 15 | Physics setup | Colliders and limits for hair, cloth, jiggle | 🔶 | ✔ |
+
+### Runtime (what code does with it)
+
+| # | System | What it does | Tier 1 |
+|---|---|---|---|
+| 16 | Animation graph | State machines, blending, foot IK, look-at | ◐ blend + state machine |
+| 17 | Secondary motion | Hair, cloth, jiggle solvers | ✔ hair + jiggle |
+| 18 | Skin shader | SSS, dual specular, pores | ✔ (RT SSS in Tier 2) |
+| 19 | Hair shader | Anisotropic highlights, alpha handling | ◐ alpha-tested cards |
+| 20 | Eye shader | Refraction, wet highlights | ✗ |
+| 21 | Cloth / suit shaders | Latex gloss, fabric sheen | ✔ |
+| 22 | Character lighting | Rim / fill lights, cutscene rigs | ◐ showcase lighting |
+| 23 | Facial animation | Expressions, lip-sync | ✗ |
+
+**Gap insight:** part of the distance to AAA is *whole component types skipped* (eyes, mouth, LODs, faces in
+motion), not only lower quality on the ones built. Count both in the final scorecard.
+
+## Why Stellar Blade's fidelity is so high
+Not one technique: **specialists polishing every component above for years**, plus a few deliberate choices.
+
+1. **Starts from reality.** ✅ Scanned body and clothes [P1][G2]: proportions, folds and surface detail come from the scan.
+2. **Effort where the player looks.** ✅ Extra care on her back for the third-person camera [G1]. 🔶 As the always-on-screen
+   hero she likely gets a large share of the memory / polygon / texture budget.
+3. **Art direction and lighting, not ray tracing.** 🔶 Raster UE4 with tuned skin/hair shaders and placed lighting (rim
+   lights separating her from the background). Lighting is a large share of perceived fidelity.
+4. **Animation sells it.** ✅ Ballet / gymnastics movement [W1]; 🔶 likely mocap + hand polish.
+5. **Time and team.** ✅ Announced 2019, shipped 2024 [W2]: ~5 years with specialists per area.
+6. **One target platform.** 🔶 PS5-only at launch: tuned for one piece of hardware.
+
+**Takeaway for this project:** their fidelity is mostly *content quality × polish time*; rendering tech is the smaller
+part. Expect to get closest where the work is code and math (shading, lighting, motion systems) and furthest where it
+is artist hours (face, hair grooming, animation feel). Ray-traced lighting is the one advantage Stellar Blade doesn't have.
+
+---
+
 ## Solo + AI tool licences (for a public portfolio)
 
 | Tool | Use | Licence status |
