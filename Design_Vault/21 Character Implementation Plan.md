@@ -8,6 +8,79 @@ tags: [plan, character]
 > Scope and target: [[19 Character Pipeline Prompt]] · research: [[20 Eve Pipeline Research]] · branch and merge rules:
 > [[12 Decisions Log]] (2026-10-17). Concepts are studied first in [[Study/Character/00 Study Index|the study notes]].
 
+## Where we are (update as steps land)
+> [!todo] Now: **Stage 1, step 1c**: my 5 functions in `Engine/Animation/PoseMath.cpp`.
+> `localMatrix` ✅ written · next: `computeGlobalPose` → `sampleVec3`/`sampleQuat` → `computeSkinningMatrices`.
+> After each: `.\run.bat test` (the `rest-pose hierarchy error` line must stay < 1e-4) → "done with X" in the study session.
+
+**Three tracks**
+```
+CHARACTER FEATURE TRACK (branch: character)
+├── Study track    (study session, branch character-study)  → learn the concept first
+├── Engine track   (build session: Claude plumbing, me math) → make it run in GHOST LIGHT
+└── Content track  (me + AI tools, later)                   → my original character
+```
+
+**Stages**
+| Stage | Goal | Status |
+|---|---|---|
+| **1 Skinning + BLAS refit** | A character animates, in raster and ray tracing | 🟡 in progress |
+| 2 Verlet hair | Hair chains swing and collide | ⬜ |
+| 3 Jiggle bones | Soft secondary motion | ⬜ |
+| 4 My character | My own model replaces CesiumMan | ⬜ (needs the content track) |
+| 5 Playable | Walk/run/jump + third-person camera | ⬜ (needs Jolt from M0b) |
+| 6 Skin + suit shading | The Eve-style look | ⬜ |
+| 7 Bedroom showcase | Final scene and comparison shots | ⬜ |
+
+**Stage 1 steps**
+| # | Step | Who | Status |
+|---|---|---|---|
+| 1a | Study notes 01–06 | Me + study session | 🟡 |
+| 1b | Import skeleton/skin/clips, Animation module, Animator, F4 overlay, stubs | Claude | ✅ `4cc452e` |
+| 1c | My 5 functions in `PoseMath.cpp` | Me | 🟡 `localMatrix` done |
+| 1d | GPU skinning pass, BLAS refit, motion vectors | Claude | ⬜ waits for 1c |
+| 1e | My `skinVertex` shader function (LBS on the GPU) | Me | ⬜ comes with 1d |
+| 1f | CesiumMan walks in raster + path tracer → PR into `main` | Both | ⬜ |
+
+**One frame, top to bottom**
+```
+ FILE: CesiumMan.gltf   (loaded once)
+   ▼
+ ┌─ Assets ─────────────────────────────────────────────┐
+ │ GltfImporter → ModelData: vertices, hierarchy (bone   │  ✅ Claude
+ │ tree), skins, skinVertices (weights), animations      │
+ └───────────────────────────────────────────────────────┘
+   ▼
+ ┌─ Animation module (Engine/Animation) ────────────────┐
+ │ Skeleton    = bone tree + parents-first order         │  ✅ Claude
+ │ Pose        = local / global / skinning matrices      │  ✅ Claude
+ │ ClipSampler = loops over the clip's channels          │  ✅ Claude
+ │ PoseMath    = THE MATH:                               │
+ │   sampleVec3 / sampleQuat  (keyframes → local)        │  ⬜ ME
+ │   localMatrix              (TRS → matrix)             │  ✅ ME
+ │   computeGlobalPose        (local → global)           │  ⬜ ME ← next
+ │   computeSkinningMatrices  (global × inverse bind)    │  ⬜ ME
+ └───────────────────────────────────────────────────────┘
+   ▼  driven every frame by
+ ┌─ World (ECS) ────────────────────────────────────────┐
+ │ Animator component  = clip, speed, time, pose         │  ✅ Claude
+ │ AnimationSystem     = calls the Animation module      │  ✅ Claude
+ └───────────────────────────────────────────────────────┘
+   ├──► F4 SkeletonOverlay: draws pose.global as lines   ✅ Claude
+   ▼
+ ┌─ Graphics (GPU) ─────────────────────────────────────┐
+ │ Skinning pass: matrices + weights → deformed verts    │  ⬜ Claude (1d)
+ │   using skinVertex()                                  │  ⬜ ME (1e)
+ │ BLAS refit → TLAS → raster G-buffer + path tracer     │  ⬜ Claude (1d)
+ └───────────────────────────────────────────────────────┘
+```
+
+**What each of my functions unlocks**
+- `computeGlobalPose` → the smoke test's hierarchy check tests my math for real
+- `sampleVec3` / `sampleQuat` → the skeleton **walks** in F4
+- `computeSkinningMatrices` → nothing visible yet; feeds step 1d
+- step 1d + `skinVertex` → the **mesh** walks, in raster and ray tracing
+
 ## Work split
 **Rule:** I (the user) write every function containing the math. Claude builds everything around it so the math can
 run, be seen and be measured. Content is mine; AI tools there are part of the experiment.
@@ -50,7 +123,7 @@ buffers), `Techniques/Character/` (skin, suit, hair shading).
 ### Stage 1: skinning + BLAS refit (CesiumMan sample) → PR 1
 - [ ] Study: hierarchy, inverse bind, LBS, normals, slerp/nlerp, refit vs rebuild
 - [x] Claude: CesiumMan in manifest, node tree + skin + animation import, `Engine/Animation`, `Animator`, skeleton overlay (F4), stubs in `Engine/Animation/PoseMath.cpp`, smoke-test check (2026-10-17)
-- [ ] Me: `sampleChannel`, `localMatrix`, `computeGlobalPose`, skinning matrices, `skinVertex` (Slang)
+- [ ] Me: `sampleVec3`/`sampleQuat`, `localMatrix` ✅, `computeGlobalPose`, `computeSkinningMatrices` (`PoseMath.cpp`), then `skinVertex` (Slang)
 - [ ] Claude: skin stream, per-instance vertex addresses, skinning pass, BLAS refit + rebuild, per-vertex motion vectors, smoke test
 - [ ] Done: CesiumMan walks in Sponza (raster + path traced), F3 motion vectors correct, `run.bat test` passes
 
