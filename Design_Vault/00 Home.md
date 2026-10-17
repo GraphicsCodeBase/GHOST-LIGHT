@@ -41,6 +41,7 @@ A C++/Vulkan ray tracing sandbox for implementing techniques from **Ray Tracing 
 | 16 | [[16 Sandbox, ECS and Scenes]] | ECS components, scene/prefab JSON, physics, sandbox tools, player modes |
 | 17 | [[17 RT Plumbing Explainer]] | BLAS/TLAS, SBT layout, one `traceRays` call, ray query vs pipeline, 10 interview questions |
 | 18 | [[18 Session Log]] | **Where we left off.** Updated at the end of every session |
+| 19 | [[19 Character Pipeline Prompt]] | Kickoff prompt for the "Solo + AI vs Studio" playable character project |
 
 ## 🧩 Templates
 - [[Technique Writeup]]: one per finished technique

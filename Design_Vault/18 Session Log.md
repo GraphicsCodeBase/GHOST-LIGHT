@@ -27,6 +27,22 @@ tags: [log, handoff]
 
 ---
 
+## 2026-10-17: Laptop setup fixed, character pipeline project drafted
+**Milestone:** between M0a and M1   **Branch:** m0a-core   **Last commit:** see `git log` (docs: draft the character pipeline prompt)
+**Done this session:**
+- New machine (RTX 3070 Ti laptop): `run.bat` failed with a 404 because the `deps-validation-layers-1.4.357.0` GitHub release still doesn't exist. Rebuilt the layer with `Scripts/BuildValidationLayers.ps1` (Python 3.13 found in `%LOCALAPPDATA%\Programs\Python`, not on PATH). `run.bat test` passes
+- Drafted [[19 Character Pipeline Prompt]]: research Eve's (Stellar Blade) pipeline, then rebuild it solo + AI with an original character, measuring every stage
+**Where we left off:**
+- Engine runs on the laptop. `Scripts/Dependencies.json` there holds the laptop build's hash (`e88ac8a7…`), **left uncommitted on purpose**: the rebuild isn't byte-identical to the dev machine's zip
+**Next steps:**
+1. New session with [[19 Character Pipeline Prompt]]: settle its two open decisions, then Phase R (research)
+2. M1 / M0b as agreed
+**Open issues / blockers:**
+- User to-do (still): upload one validation-layer zip as the GitHub release and make `Dependencies.json` match it
+- `Downloads.ps1` reports a 404 as "check your internet connection"; it should say the release asset is missing
+**Decisions made:**
+- None yet. The character project's scope change is pending (see [[19 Character Pipeline Prompt]])
+
 ## 2026-10-10 (day 2): M0a complete: steps 5–9 (world, GPU scene, ray tracing, technique API, debug tools)
 **Milestone:** M0a ✅   **Branch:** m0a-core (pushed)   **Last commit:** see `git log` (docs: M0a complete)
 **Done this session:**
