@@ -16,6 +16,11 @@ tags: [research, character, pipeline]
 > 5. Solo + AI is strongest at **runtime/graphics** stages (code + math, AI reviews) and **weakest at deformation-ready
 >    content** (topology, weights, hair cards), where AI generators exist but output needs manual cleanup.
 
+> [!important] Target revised 2026-10-17: **style match**, not fidelity match
+> The question is now **"How close can one dev + AI get to Eve's *art style*?"**, with an original character
+> (never Eve's design or the scanned model's body). See [[#Style target]] below. The pipeline map stays valid; the base
+> character moves from VRoid (anime) to a **semi-realistic human base mesh**.
+
 Legend: ✅ confirmed by a cited source · 🔶 inferred (standard UE4/AAA practice, not stated by Shift Up)
 Kind: **Math** = I write the core math · **Content** = AI-assisted content, measured · **Engine** = Claude builds plumbing
 
@@ -49,7 +54,7 @@ sculpts made team communication easier [W2][G3]. Physical-first pipelines are a 
 
 | Tool | Use | Licence status |
 |---|---|---|
-| **VRoid Studio** | Base character + hair + rig + spring bones | Free. The exporter **sets the VRM's licence fields** (commercial use, redistribution, alteration) [V1]. A model I build myself = I choose. Check the current official terms page |
+| **VRoid Studio** | Base character + hair + rig + spring bones (anime style: dropped for the style target) | Free. The exporter **sets the VRM's licence fields** (commercial use, redistribution, alteration) [V1]. A model I build myself = I choose. Check the current official terms page |
 | **TRELLIS.2** (Microsoft) | Image→3D mesh + PBR | **MIT** [T2]. Needs ~16–24 GB VRAM and Linux per reports, so it **won't run on an 8 GB laptop** (cloud GPU needed) |
 | **Hunyuan3D 2.x** (Tencent) | Image→3D | Community licence **excludes the EU, UK and South Korea** [H1]. Check where you are before using it |
 | Meshy / Tripo (cloud) | Text/image→3D | Paid tiers grant commercial rights; free tiers usually don't. Check each plan's terms |
@@ -72,13 +77,40 @@ sculpts made team communication easier [W2][G3]. Physical-first pipelines are a 
 
 ---
 
-## Proposed Tier 1 (for approval)
-**Character:** an original VRoid character (fastest route to a rigged, spring-boned VRM) as the **baseline path**, plus
-one **AI image→3D + AccuRIG** attempt at the same design as the **comparison path**. The gap between them is the
-first headline result of the experiment.
+## Style target
+Eve's style as **my reading** (🔶 analysis, no published style guide). These are the traits we try to reproduce:
 
-**Runtime (GHOST LIGHT):** idle / walk / run / jump with blending · Verlet hair on VRM spring chains · jiggle bones ·
-dual-lobe GGX + wrap diffuse/thickness transmission · RT shadows · third-person camera on the M0b walking character.
+| Trait | What it means | Predicted reach (solo + AI) | Main limit |
+|---|---|---|---|
+| **Materials & finish** | Warm soft skin vs glossy latex/fabric suit vs hard sci-fi metal | **75–85 %** | Shading = my graphics work; RT helps. **Flagship** |
+| **Lighting / presentation** | Cinematic, strong rim light, polished gloss | **~75 %** | Needs M1 shadows + M2 GGX first |
+| **Costume & silhouette** | Slim elegant shape, long ponytail, suit readable **from behind** | **60–70 %** | Mechanical detail costs modelling time |
+| **Hair** | Long flowing ponytail, look + motion | **~50 %** | Grooming good cards is art skill |
+| **Motion** | Graceful, dance-like (ballet / gymnastics) | **40–50 %** | Library anims look generic; feel = performers + polish |
+| **Face** | Idealised but realistic, the style's signature | **35–45 %** | Skilled sculpting; AI least reliable. **Key experiment** |
+
+**Prediction: ~55–65 % "recognisably the same style"** (a few months part-time, Tier 1, controlled showcase).
+Third-person / mid-shot camera ≈ 65–70 %; face close-ups ≈ 45 %. A photoreal *fidelity* match would sit nearer 30–35 %.
+
+**Hypothesis to test:** *AI collapses engineering time far more than content time.* Expect: close on materials, lighting
+and silhouette; partial on hair and motion; furthest on the face.
+
+**Rules for style work:** describe the traits in AI prompts ("semi-realistic, idealised face, glossy sci-fi bodysuit,
+long ponytail"), never the artist's or character's name; the design must be original.
+
+**Showcase scene:** a small **bedroom** (warm window light, character + props). Interiors are RT's best case once M1, M2,
+M5 and M6 exist; props are where AI 3D generation works best (no deformation). Path traced mode runs no techniques, so
+the reference path tracer will eventually need the skin/hair materials for a fair comparison.
+
+## Proposed Tier 1 (for approval)
+**Character:** an original character on a **semi-realistic human base mesh**, stylised toward the target. Candidates
+(licences to verify before choosing): Blender Studio human base meshes, MakeHuman / MPFB (output reportedly CC0),
+Character Creator 4 (paid, check export terms). Comparison path: one **AI image→3D + AccuRIG** attempt at the same design.
+VRoid drops out (anime style); spring-bone chains are authored by us instead of coming from VRM.
+
+**Runtime (GHOST LIGHT):** idle / walk / run / jump with blending · Verlet hair on authored bone chains · jiggle bones ·
+dual-lobe GGX + wrap diffuse/thickness transmission · suit materials (gloss/sheen) · RT shadows · third-person camera
+on the M0b walking character · bedroom showcase scene.
 
 **Out of Tier 1:** per-vertex soft skin, RT SSS, facial animation, cloth, combat (Tier 2–3).
 

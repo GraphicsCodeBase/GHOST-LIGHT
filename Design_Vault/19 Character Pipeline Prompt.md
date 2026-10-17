@@ -26,8 +26,11 @@ playable character, then rebuild that pipeline as a solo developer with AI help,
 character (not Eve, no ripped assets, no real-person likeness).
 
 ## The question I'm answering
-How close can one programmer + AI get to a studio-quality playable character, and which pipeline
-stages can AI automate, assist, or not help with at all? Every stage is measured.
+How close can one programmer + AI get to Eve's ART STYLE (semi-realistic, idealised face, warm
+skin vs glossy sci-fi suit, long flowing ponytail, graceful motion, cinematic lighting) with an
+original character, and which pipeline stages can AI automate, assist, or not help with at all?
+Every stage is measured. Hypothesis: AI collapses engineering time far more than content time.
+Prediction (Design_Vault/20 Eve Pipeline Research.md): ~55–65 % "recognisably the same style".
 
 ## Phase R: Research (no code)
 Produce a pipeline map of Eve's creation, one section per stage:
@@ -50,7 +53,8 @@ and whether the stage is "I write the math" or "AI-assisted content".
   no Blackwell-only features, run.bat test passes).
 
 ## Scope tiers ("playable")
-- Tier 1: idle/walk/run/jump with blending, Verlet hair + jiggle, skin shading, in-engine, third-person camera.
+- Tier 1: original character on a semi-realistic human base mesh, idle/walk/run/jump with blending,
+  Verlet hair + jiggle, skin + suit shading, third-person camera, bedroom showcase scene.
 - Tier 2: small combat moveset, facial expressions, cloth on costume pieces.
 - Tier 3: AAA polish (stiffness falloff, angle limits, inertia scaling, corrective blendshapes, LODs, perf budget).
 
@@ -65,6 +69,8 @@ roadmap, and a concrete first build step.
 ```
 
 > [!info] Phase R result: [[20 Eve Pipeline Research]]
+> **Target revised 2026-10-17:** match Eve's **art style**, not her fidelity. Base character = semi-realistic human base
+> mesh (VRoid dropped as anime); flagship = skin vs suit materials under RT light; key experiment = the face.
 
 ## Notes carried over from the drafting session
 - **Engine today:** no skinning/animation import (cgltf can parse it), hybrid renderer, one shared compacted BLAS per
