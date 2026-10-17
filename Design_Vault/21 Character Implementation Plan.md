@@ -24,15 +24,15 @@ CHARACTER FEATURE TRACK (branch: character)
 
 ### Stages
 
-| Stage | Goal | Status |
-|---|---|---|
-| **1 Skinning + BLAS refit** | A character animates, in raster and ray tracing | 🟡 in progress |
-| 2 Verlet hair | Hair chains swing and collide | ⬜ |
-| 3 Jiggle bones | Soft secondary motion | ⬜ |
-| 4 My character | My own model replaces CesiumMan | ⬜ (needs the content track) |
-| 5 Playable | Walk/run/jump + third-person camera | ⬜ (needs Jolt from M0b) |
-| 6 Skin + suit shading | The Eve-style look | ⬜ |
-| 7 Bedroom showcase | Final scene and comparison shots | ⬜ |
+| Stage                       | Goal                                            | Status                      |
+| --------------------------- | ----------------------------------------------- | --------------------------- |
+| **1 Skinning + BLAS refit** | A character animates, in raster and ray tracing | 🟡 in progress              |
+| 2 Verlet hair               | Hair chains swing and collide                   | ⬜                           |
+| 3 Jiggle bones              | Soft secondary motion                           | ⬜                           |
+| 4 My character              | My own model replaces CesiumMan                 | ⬜ (needs the content track) |
+| 5 Playable                  | Walk/run/jump + third-person camera             | ⬜ (needs Jolt from M0b)     |
+| 6 Skin + suit shading       | The Eve-style look                              | ⬜                           |
+| 7 Bedroom showcase          | Final scene and comparison shots                | ⬜                           |
 
 ### Stage 1 steps
 
