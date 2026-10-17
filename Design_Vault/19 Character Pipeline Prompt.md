@@ -64,6 +64,8 @@ pipeline map. Then propose which stages are realistic for Tier 1, how they map o
 roadmap, and a concrete first build step.
 ```
 
+> [!info] Phase R result: [[20 Eve Pipeline Research]]
+
 ## Notes carried over from the drafting session
 - **Engine today:** no skinning/animation import (cgltf can parse it), hybrid renderer, one shared compacted BLAS per
   mesh with no refit, TLAS rebuilt every frame, motion vectors for rigid motion only. Characters need per-instance
