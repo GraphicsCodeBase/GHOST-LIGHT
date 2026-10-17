@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "Cesium Man",
+  "category": "Characters",
+  "components": {
+    "MeshRenderer": { "model": "Assets/Models/CesiumMan/CesiumMan.gltf" },
+    "Animator": { "speed": 1.0, "loop": true }
+  }
+}

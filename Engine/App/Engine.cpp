@@ -16,6 +16,7 @@
 #include "UI/PerformanceOverlay.h"
 #include "UI/SceneErrorOverlay.h"
 #include "UI/ShaderErrorOverlay.h"
+#include "UI/SkeletonOverlay.h"
 #include "UI/TechniquePanel.h"
 #include "UI/TextureViewerPanel.h"
 #include "World/Systems/GpuSceneExtractionSystem.h"
@@ -136,7 +137,7 @@ int Engine::run() {
             reportSceneResult(reload, m_world->currentScene());
             applySceneTechniques();
         }
-        m_world->update();
+        m_world->update(static_cast<float>(m_timer.deltaSeconds()), *m_assets);
         m_player->update(*m_window, static_cast<float>(m_timer.deltaSeconds()), m_settings.cameraSpeed);
         updateGpuScene();
 
@@ -177,6 +178,13 @@ void Engine::drawUi() {
     }
     if (m_showTextureViewer) {
         ui::TextureViewerPanel::draw(*m_renderer, &m_showTextureViewer);
+    }
+    if (m_showSkeletons) {
+        const graphics::scene::GpuScene::CameraInput camera{m_player->position(), m_player->forward(), m_player->fovYDeg, m_player->nearPlane};
+        const VkExtent2D extent{static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y)};
+        const glm::mat4 viewProjection =
+            graphics::scene::GpuScene::projectionMatrix(camera, extent) * graphics::scene::GpuScene::viewMatrix(camera);
+        ui::SkeletonOverlay::draw(world::AnimationSystem::skeletonLines(m_world->registry(), m_world->animation()), viewProjection);
     }
     m_ui->endFrame();
 }
@@ -253,6 +261,9 @@ void Engine::handleGlobalShortcuts() {
     }
     if (input.wasPressed(platform::Key::F3)) {
         m_showTextureViewer = !m_showTextureViewer;
+    }
+    if (input.wasPressed(platform::Key::F4)) {
+        m_showSkeletons = !m_showSkeletons;
     }
     if (input.wasPressed(platform::Key::F5)) {
         const bool raster = m_renderer->mode() == graphics::Renderer::Mode::Raster;

@@ -33,6 +33,19 @@ glm::mat4 reverseZPerspective(float fovYRadians, float aspect, float nearPlane) 
     return projection;
 }
 
+} // namespace
+
+glm::mat4 GpuScene::viewMatrix(const CameraInput& camera) {
+    return glm::lookAt(camera.position, camera.position + camera.forward, glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+glm::mat4 GpuScene::projectionMatrix(const CameraInput& camera, VkExtent2D renderSize) {
+    const float aspect = static_cast<float>(renderSize.width) / static_cast<float>(std::max(renderSize.height, 1u));
+    return reverseZPerspective(glm::radians(camera.fovYDeg), aspect, camera.nearPlane);
+}
+
+namespace {
+
 uint32_t textureIndex(int32_t local, const std::vector<uint32_t>& map) {
     return (local >= 0 && static_cast<size_t>(local) < map.size()) ? map[static_cast<size_t>(local)] : kNoTexture;
 }
@@ -379,9 +392,8 @@ void GpuScene::prepareFrame(uint32_t slot, uint64_t frameIndex, VkExtent2D rende
     std::memcpy(frame.draws.mapped(), m_gpuDraws.data(), m_gpuDraws.size() * sizeof(GpuDraw));
     std::memcpy(frame.lights.mapped(), m_lights.data(), m_lights.size() * sizeof(GpuLight));
 
-    const float aspect = static_cast<float>(renderSize.width) / static_cast<float>(std::max(renderSize.height, 1u));
-    const glm::mat4 view = glm::lookAt(m_camera.position, m_camera.position + m_camera.forward, glm::vec3(0.0f, 1.0f, 0.0f));
-    const glm::mat4 projection = reverseZPerspective(glm::radians(m_camera.fovYDeg), aspect, m_camera.nearPlane);
+    const glm::mat4 view = viewMatrix(m_camera);
+    const glm::mat4 projection = projectionMatrix(m_camera, renderSize);
     const glm::mat4 viewProjection = projection * view;
     if (m_resetHistory) {
         m_previousViewProjection = viewProjection; // no motion on the first frame after a scene load or teleport

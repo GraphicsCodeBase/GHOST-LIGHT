@@ -6,6 +6,7 @@
 |---|---|
 | [`Static/`](Static/README.md) | Whole environments (Sponza) |
 | [`Props/`](Props/README.md) | Objects (Damaged Helmet; crates, barrels, spheres arrive with the sandbox in M0b) |
+| [`Characters/`](Characters/README.md) | Skinned, animated characters (character feature track) |
 | `Lights/`, `Shapes/` | M0b |
 
 Format: `{ "version": 1, "name": "...", "category": "Props", "components": { "MeshRenderer": { "model": "..." } } }`.

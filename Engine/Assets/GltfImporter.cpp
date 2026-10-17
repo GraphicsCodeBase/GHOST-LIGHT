@@ -1,4 +1,5 @@
-// glTF import: meshes -> one shared vertex/index array, materials (metallic-roughness + common extensions), nodes, images.
+// glTF import: meshes -> one shared vertex/index array, materials (metallic-roughness + common extensions), nodes, images,
+// plus the node hierarchy, skins (joints + inverse bind matrices + per-vertex weights) and animation clips.
 #include "Assets/GltfImporter.h"
 
 #include "Assets/ImageLoader.h"
@@ -17,7 +18,10 @@
 
 #include <cgltf.h>
 #include <glm/geometric.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/matrix.hpp>
 
 namespace ghost::assets {
 
@@ -130,6 +134,85 @@ int32_t imageIndex(const cgltf_texture_view& view, const cgltf_data* data) {
     return static_cast<int32_t>(view.texture->image - data->images);
 }
 
+// A node's local transform as translation / rotation / scale. Matrices (allowed by glTF for nodes that aren't animated)
+// are split up assuming no shear, which glTF forbids for node matrices anyway.
+void readLocalTransform(const cgltf_node& node, HierarchyNodeData& out) {
+    if (!node.has_matrix) {
+        if (node.has_translation) out.translation = glm::make_vec3(node.translation);
+        if (node.has_rotation) out.rotation = glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
+        if (node.has_scale) out.scale = glm::make_vec3(node.scale);
+        return;
+    }
+    const glm::mat4 matrix = glm::make_mat4(node.matrix);
+    out.translation = glm::vec3(matrix[3]);
+    glm::mat3 axes(matrix);
+    out.scale = glm::vec3(glm::length(axes[0]), glm::length(axes[1]), glm::length(axes[2]));
+    if (glm::determinant(axes) < 0.0f) {
+        out.scale.x = -out.scale.x; // a mirroring matrix: keep the rotation proper, put the flip in the scale
+    }
+    for (int axis = 0; axis < 3; ++axis) {
+        axes[axis] /= out.scale[axis] != 0.0f ? out.scale[axis] : 1.0f;
+    }
+    out.rotation = glm::normalize(glm::quat_cast(axes));
+}
+
+// Joint indices and weights of one primitive into the model's skin stream. Weights are renormalized: exporters
+// sometimes write sums slightly off 1, which would scale the skinned vertex.
+void readSkinAttributes(const cgltf_primitive& primitive, uint32_t firstVertex, std::vector<SkinVertex>& skinVertices) {
+    const cgltf_accessor* joints = cgltf_find_accessor(&primitive, cgltf_attribute_type_joints, 0);
+    const cgltf_accessor* weights = cgltf_find_accessor(&primitive, cgltf_attribute_type_weights, 0);
+    if (!joints || !weights) {
+        return;
+    }
+    const std::vector<float> w4 = unpack(weights, 4);
+    for (cgltf_size v = 0; v < joints->count; ++v) {
+        SkinVertex& out = skinVertices[firstVertex + v];
+        cgltf_uint indices[4] = {};
+        cgltf_accessor_read_uint(joints, v, indices, 4);
+        out.joints = glm::uvec4(indices[0], indices[1], indices[2], indices[3]);
+        out.weights = glm::vec4(w4[v * 4], w4[v * 4 + 1], w4[v * 4 + 2], w4[v * 4 + 3]);
+        const float sum = out.weights.x + out.weights.y + out.weights.z + out.weights.w;
+        out.weights = sum > 0.0f ? out.weights / sum : glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+    }
+}
+
+void readAnimations(const cgltf_data* data, const std::string& display, ModelData& model, std::vector<std::string>& warnings) {
+    for (cgltf_size a = 0; a < data->animations_count; ++a) {
+        const cgltf_animation& source = data->animations[a];
+        AnimationData clip;
+        clip.name = source.name ? source.name : "animation" + std::to_string(a);
+        for (cgltf_size c = 0; c < source.channels_count; ++c) {
+            const cgltf_animation_channel& channel = source.channels[c];
+            if (!channel.target_node || !channel.sampler) {
+                continue;
+            }
+            AnimationChannelData out;
+            out.node = static_cast<uint32_t>(channel.target_node - data->nodes);
+            size_t components = 3;
+            switch (channel.target_path) {
+            case cgltf_animation_path_type_translation: out.path = AnimationPath::Translation; break;
+            case cgltf_animation_path_type_rotation: out.path = AnimationPath::Rotation; components = 4; break;
+            case cgltf_animation_path_type_scale: out.path = AnimationPath::Scale; break;
+            default:
+                warnings.push_back(display + ": animation '" + clip.name + "' animates morph weights (not supported), channel skipped");
+                continue;
+            }
+            switch (channel.sampler->interpolation) {
+            case cgltf_interpolation_type_step: out.interpolation = AnimationInterpolation::Step; break;
+            case cgltf_interpolation_type_cubic_spline: out.interpolation = AnimationInterpolation::CubicSpline; break;
+            default: out.interpolation = AnimationInterpolation::Linear; break;
+            }
+            out.times = unpack(channel.sampler->input, 1);
+            out.values = unpack(channel.sampler->output, components);
+            if (!out.times.empty()) {
+                clip.duration = std::max(clip.duration, out.times.back());
+            }
+            clip.channels.push_back(std::move(out));
+        }
+        model.animations.push_back(std::move(clip));
+    }
+}
+
 } // namespace
 
 GltfImporter::Result GltfImporter::load(const std::filesystem::path& path) {
@@ -222,7 +305,9 @@ GltfImporter::Result GltfImporter::load(const std::filesystem::path& path) {
     }
     const auto decoded = std::chrono::steady_clock::now();
 
-    // Meshes and primitives.
+    // Meshes and primitives. The skin stream is filled alongside and dropped again if no primitive has joints.
+    std::vector<SkinVertex> skinVertices;
+    bool hasSkinAttributes = false;
     size_t triangles = 0;
     for (cgltf_size m = 0; m < data->meshes_count; ++m) {
         const cgltf_mesh& sourceMesh = data->meshes[m];
@@ -244,6 +329,11 @@ GltfImporter::Result GltfImporter::load(const std::filesystem::path& path) {
             out.vertexCount = static_cast<uint32_t>(positions->count);
             out.firstIndex = static_cast<uint32_t>(model.indices.size());
             model.vertices.resize(model.vertices.size() + positions->count);
+            skinVertices.resize(model.vertices.size());
+            if (cgltf_find_accessor(&primitive, cgltf_attribute_type_joints, 0)) {
+                hasSkinAttributes = true;
+                readSkinAttributes(primitive, out.firstVertex, skinVertices);
+            }
 
             const std::vector<float> p3 = unpack(positions, 3);
             const std::vector<float> n3 = normals ? unpack(normals, 3) : std::vector<float>();
@@ -300,6 +390,44 @@ GltfImporter::Result GltfImporter::load(const std::filesystem::path& path) {
         model.materials.push_back(fallback);
     }
 
+    if (hasSkinAttributes) {
+        model.skinVertices = std::move(skinVertices);
+    }
+
+    // The whole node tree (joints need their parents, including non-joint ancestors such as a Z-up correction).
+    model.hierarchy.resize(data->nodes_count);
+    for (cgltf_size n = 0; n < data->nodes_count; ++n) {
+        const cgltf_node& node = data->nodes[n];
+        HierarchyNodeData& out = model.hierarchy[n];
+        out.name = node.name ? node.name : "node" + std::to_string(n);
+        out.parent = node.parent ? static_cast<int32_t>(node.parent - data->nodes) : -1;
+        readLocalTransform(node, out);
+        float world[16];
+        cgltf_node_transform_world(&node, world);
+        out.restGlobal = glm::make_mat4(world);
+    }
+
+    // Skins.
+    for (cgltf_size s = 0; s < data->skins_count; ++s) {
+        const cgltf_skin& source = data->skins[s];
+        SkinData skin;
+        skin.name = source.name ? source.name : "skin" + std::to_string(s);
+        for (cgltf_size j = 0; j < source.joints_count; ++j) {
+            skin.joints.push_back(static_cast<uint32_t>(source.joints[j] - data->nodes));
+        }
+        // No inverse bind matrices in the file means identity (glTF spec).
+        skin.inverseBindMatrices.assign(source.joints_count, glm::mat4(1.0f));
+        if (source.inverse_bind_matrices) {
+            const std::vector<float> m16 = unpack(source.inverse_bind_matrices, 16);
+            for (cgltf_size j = 0; j < source.joints_count && (j + 1) * 16 <= m16.size(); ++j) {
+                skin.inverseBindMatrices[j] = glm::make_mat4(m16.data() + j * 16);
+            }
+        }
+        model.skins.push_back(std::move(skin));
+    }
+
+    readAnimations(data, display, model, result.warnings);
+
     // Nodes: every node that places a mesh, with its full model-space transform.
     for (cgltf_size n = 0; n < data->nodes_count; ++n) {
         const cgltf_node& node = data->nodes[n];
@@ -312,6 +440,8 @@ GltfImporter::Result GltfImporter::load(const std::filesystem::path& path) {
         float matrix[16];
         cgltf_node_transform_world(&node, matrix);
         out.transform = glm::make_mat4(matrix);
+        out.hierarchyNode = static_cast<int32_t>(n);
+        out.skin = node.skin ? static_cast<int32_t>(node.skin - data->skins) : -1;
         model.nodes.push_back(out);
     }
 
@@ -334,10 +464,10 @@ GltfImporter::Result GltfImporter::load(const std::filesystem::path& path) {
 
     const auto end = std::chrono::steady_clock::now();
     auto ms = [](auto from, auto to) { return std::chrono::duration<double, std::milli>(to - from).count(); };
-    core::Log::info("Loaded {}: {} meshes, {} primitives, {} triangles, {} images, {} materials ({:.0f} ms: parse {:.0f}, images {:.0f}, "
-                    "geometry {:.0f})",
+    core::Log::info("Loaded {}: {} meshes, {} primitives, {} triangles, {} images, {} materials, {} skins, {} animations ({:.0f} ms: "
+                    "parse {:.0f}, images {:.0f}, geometry {:.0f})",
                     display, model.meshes.size(), model.primitives.size(), triangles, model.images.size(), model.materials.size(),
-                    ms(start, end), ms(start, parsed), ms(parsed, decoded), ms(decoded, end));
+                    model.skins.size(), model.animations.size(), ms(start, end), ms(start, parsed), ms(parsed, decoded), ms(decoded, end));
     result.ok = true;
     return result;
 }

@@ -6,6 +6,7 @@ Edit a scene while the engine runs and it reloads automatically; mistakes show u
 |---|---|
 | `Sponza.scene.json` | Default scene: Crytek Sponza, sun, HDRI sky, Damaged Helmet |
 | `CornellBox.scene.json` | Procedural Cornell box for path tracer validation |
+| `CharacterTest.scene.json` | Character track: Cesium Man with an `Animator` in Sponza (F4 shows the skeleton) |
 
 ## Format (version 1)
 ```jsonc

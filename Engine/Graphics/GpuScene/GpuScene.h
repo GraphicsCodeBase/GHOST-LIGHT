@@ -61,6 +61,11 @@ public:
         float nearPlane = 0.05f;
     };
 
+    // The camera matrices the frame constants use (reverse-Z, infinite far plane, Vulkan clip space). Public so CPU-side
+    // overlays project exactly like the renderer.
+    static glm::mat4 viewMatrix(const CameraInput& camera);
+    static glm::mat4 projectionMatrix(const CameraInput& camera, VkExtent2D renderSize);
+
     struct DrawCommand {
         uint32_t indexCount = 0;
         uint32_t firstIndex = 0;

@@ -49,7 +49,7 @@ buffers), `Techniques/Character/` (skin, suit, hair shading).
 ## Stages
 ### Stage 1: skinning + BLAS refit (CesiumMan sample) → PR 1
 - [ ] Study: hierarchy, inverse bind, LBS, normals, slerp/nlerp, refit vs rebuild
-- [ ] Claude: CesiumMan in manifest, node tree + skin + animation import, `Engine/Animation`, `Animator`, skeleton overlay, stubs
+- [x] Claude: CesiumMan in manifest, node tree + skin + animation import, `Engine/Animation`, `Animator`, skeleton overlay (F4), stubs in `Engine/Animation/PoseMath.cpp`, smoke-test check (2026-10-17)
 - [ ] Me: `sampleChannel`, `localMatrix`, `computeGlobalPose`, skinning matrices, `skinVertex` (Slang)
 - [ ] Claude: skin stream, per-instance vertex addresses, skinning pass, BLAS refit + rebuild, per-vertex motion vectors, smoke test
 - [ ] Done: CesiumMan walks in Sponza (raster + path traced), F3 motion vectors correct, `run.bat test` passes

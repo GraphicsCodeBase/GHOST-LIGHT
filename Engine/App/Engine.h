@@ -46,6 +46,8 @@ public:
     int run();
 
     uint64_t framesRun() const { return m_framesRun; }
+    // The F4 skeleton overlay (the smoke test turns it on for a capture).
+    void setSkeletonOverlay(bool show) { m_showSkeletons = show; }
     platform::Window& window() { return *m_window; }
     graphics::Renderer& renderer() { return *m_renderer; }
     world::World& world() { return *m_world; }
@@ -81,6 +83,7 @@ private:
     bool m_resetCameraHistory = true; // no motion vectors across a teleport
     bool m_showTechniques = true;     // Techniques panel (F2)
     bool m_showTextureViewer = false; // Texture viewer panel (F3)
+    bool m_showSkeletons = false;     // Skeleton overlay (F4)
     std::vector<std::string> m_sceneErrors;   // shown by SceneErrorOverlay until dismissed
     std::vector<std::string> m_sceneWarnings;
     uint64_t m_framesRun = 0;

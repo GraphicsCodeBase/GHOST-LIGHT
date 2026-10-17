@@ -12,6 +12,8 @@
 | `TechniquePanel` | Techniques window (F2): techniques by category, enable checkbox, `Param<T>` widgets (slider / checkbox / color), Reset |
 | `TextureViewerPanel` | Texture viewer window (F3): any render graph texture (format, size), channels incl. octahedral normals, value range, presets per texture name, inset or full screen. Drawn by `Graphics/Passes/TextureViewerPass` |
 
+| `SkeletonOverlay` | Skeleton overlay (F4): animated skeletons as joint lines on ImGui's background layer, projected with the renderer's camera (`GpuScene::viewMatrix/projectionMatrix`) |
+
 Spawn menu and inspector arrive in M0b.
 
 **Depends on:** Core, Platform, Graphics/Vulkan, Graphics/ShaderCompiler, Graphics/Renderer (and through it the technique runtime). ImGui and GLFW are private

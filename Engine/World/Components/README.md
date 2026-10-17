@@ -13,5 +13,6 @@
 | `SpotLight` | color, intensity, radius, inner/outer cone (deg), range | `"SpotLight": { ... }` |
 | `Camera` | vertical FOV, near plane (far = infinity) | `"Camera": { "fovYDeg": 60 }` |
 | `PrefabInstance` | source prefab path | entity `"prefab"` |
+| `Animator` | clip name, speed, loop, playing, clock, resolved clip index, the current `animation::Pose` | `"Animator": { "clip": "name" (empty = first clip), "speed": 1, "loop": true, "playing": true, "startTime": 0 }`; needs a `MeshRenderer` with a skinned glTF model |
 
 Physics components (`RigidBody`, `Collider`, `Grabbable`, `Frozen`) arrive in M0b; until then the loader warns and ignores them.

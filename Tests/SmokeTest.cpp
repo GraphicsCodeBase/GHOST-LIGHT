@@ -2,6 +2,8 @@
 // exercises shader hot reload (break a shader, check the error is reported and the old pipeline survives, fix it),
 // loads every scene, checks the GPU scene was filled, and fails on any logged error or any Vulkan validation error.
 #include "App/Engine.h"
+#include "Animation/PoseMath.h"
+#include "Animation/Skeleton.h"
 #include "Assets/AssetRegistry.h"
 #include "Core/Log.h"
 #include "Core/Paths.h"
@@ -17,10 +19,13 @@
 #include "Graphics/ShaderCompiler/PipelineLibrary.h"
 #include "Platform/Window.h"
 #include "Sandbox/Player/FlyController.h"
+#include "World/Components/Animator.h"
 #include "World/Components/MeshRenderer.h"
 #include "World/World.h"
 
+#include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -339,6 +344,71 @@ struct DebugToolsCheck {
     }
 };
 
+// Animation (character track): the character scene loads its skeleton, skin and clip, the clip clock advances, the
+// skeleton overlay has a segment per joint, and PoseMath::computeGlobalPose (the user's math) reproduces cgltf's
+// rest-pose matrices from the rest transforms. With the CHAR-TODO placeholders this passes trivially.
+struct AnimationCheck {
+    std::string failure = "never ran";
+    float startTime = 0.0f;
+
+    void step(ghost::app::Engine& engine, uint64_t frame) {
+        auto& world = engine.world();
+        if (frame == 100) {
+            if (!engine.loadScene("Scenes/CharacterTest.scene.json")) {
+                failure = "Scenes/CharacterTest.scene.json did not load";
+            }
+        } else if (frame == 102) {
+            auto view = world.registry().view<ghost::world::Animator, ghost::world::MeshRenderer>();
+            if (view.size_hint() == 0) {
+                failure = "no Animator in the character scene";
+                return;
+            }
+            startTime = view.get<ghost::world::Animator>(view.front()).time;
+            engine.setSkeletonOverlay(true);
+        } else if (frame == 106) {
+            // Kept for inspection: Build/SmokeTest/Skeleton.png (character + F4 overlay).
+            ghost::debugtools::FrameCapture::requestPng(engine.renderer(), ghost::core::Paths::build() / "SmokeTest" / "Skeleton.png");
+        } else if (frame == 110) {
+            engine.setSkeletonOverlay(false);
+            auto view = world.registry().view<ghost::world::Animator, ghost::world::MeshRenderer>();
+            const entt::entity entity = view.front();
+            const auto& animator = view.get<ghost::world::Animator>(entity);
+            const auto* skeleton = world.animation().skeleton(view.get<ghost::world::MeshRenderer>(entity).handle);
+            if (!skeleton || !skeleton->skin() || skeleton->skin()->joints.size() != 19) {
+                failure = "Cesium Man's skeleton or skin did not import (expected 19 joints)";
+                return;
+            }
+            if (animator.clipIndex < 0 || animator.time == startTime) {
+                failure = "the animation clock did not advance";
+                return;
+            }
+            const size_t lines = ghost::world::AnimationSystem::skeletonLines(world.registry(), world.animation()).size();
+            if (lines != 18) {
+                failure = "expected 18 skeleton overlay segments, got " + std::to_string(lines);
+                return;
+            }
+            ghost::animation::Pose rest = skeleton->makeRestPose();
+            ghost::animation::PoseMath::computeGlobalPose(*skeleton, rest);
+            float maxError = 0.0f;
+            for (size_t node = 0; node < skeleton->nodeCount(); ++node) {
+                for (int column = 0; column < 4; ++column) {
+                    const glm::vec4 difference = rest.global[node][column] - skeleton->referenceRestGlobals()[node][column];
+                    maxError = std::max({maxError, std::abs(difference.x), std::abs(difference.y), std::abs(difference.z), std::abs(difference.w)});
+                }
+            }
+            std::printf("animation: %zu joints, clip at %.2f s, rest-pose hierarchy error %.2e\n", skeleton->skin()->joints.size(),
+                        animator.time, maxError);
+            if (maxError > 1e-4f) {
+                failure = "PoseMath::computeGlobalPose does not reproduce the rest pose (max error " + std::to_string(maxError) + ")";
+                return;
+            }
+            failure.clear();
+        } else if (frame == 112) {
+            engine.loadScene("Scenes/Sponza.scene.json");
+        }
+    }
+};
+
 } // namespace
 
 int main() {
@@ -348,6 +418,7 @@ int main() {
     PathTracerCheck pathTracerCheck;
     TechniqueCheck techniqueCheck;
     DebugToolsCheck debugToolsCheck;
+    AnimationCheck animationCheck;
     std::filesystem::path capturePath;
     size_t passTimings = 0;
     ghost::app::EngineOptions options;
@@ -368,6 +439,7 @@ int main() {
         pathTracerCheck.step(engine, frame);
         techniqueCheck.step(engine, frame);
         debugToolsCheck.step(engine, frame);
+        animationCheck.step(engine, frame);
         if (frame == 200) {
             // The last rendered image, kept for inspection: Build/SmokeTest/LastFrame.png.
             capturePath = ghost::core::Paths::build() / "SmokeTest" / "LastFrame.png";
@@ -407,6 +479,10 @@ int main() {
     const bool pathTracerOk = pathTracerCheck.failure.empty();
     const bool techniquesOk = techniqueCheck.failure.empty();
     const bool debugToolsOk = debugToolsCheck.failure.empty();
+    const bool animationOk = animationCheck.failure.empty();
+    if (!animationOk) {
+        std::printf("animation check FAILED: %s\n", animationCheck.failure.c_str());
+    }
     if (!debugToolsOk) {
         std::printf("debug tools check FAILED: %s\n", debugToolsCheck.failure.c_str());
     }
@@ -425,7 +501,7 @@ int main() {
     std::printf("scenes: %zu shipped scene(s) loaded cleanly\n", sceneCheck.scenesLoaded);
     const int errors = ghost::core::Log::errorCount();
     const bool passed = exitCode == 0 && frames >= kFramesToRun && errors == 0 && validationOk && hotReloadOk && captureOk && timingsOk &&
-                        scenesOk && playerOk && pathTracerOk && techniquesOk && debugToolsOk;
+                        scenesOk && playerOk && pathTracerOk && techniquesOk && debugToolsOk && animationOk;
     std::printf("\nSmoke test: %llu/%llu frames, %d error(s), validation %s, hot reload %s, capture %s, GPU timers %zu passes, "
                 "engine exit code %d -> %s\n",
                 static_cast<unsigned long long>(frames), static_cast<unsigned long long>(kFramesToRun), errors,

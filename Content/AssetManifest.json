@@ -121,6 +121,22 @@
       "source": "https://momentsingraphics.de/BlueNoise.html",
       "scenes": [],
       "dest": "Content/Assets/BlueNoise"
+    },
+    {
+      "name": "cesium-man",
+      "version": "glTF-Sample-Assets@4995a638",
+      "baseUrl": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/4995a638c96dbc94376d3d6164e70fee3ac7f7a2/Models/CesiumMan/glTF/",
+      "sizeBytes": 461627,
+      "license": "CC-BY-4.0 (Cesium logo and trademarks excluded)",
+      "attribution": "Cesium Man by Cesium; glTF version from the Khronos glTF-Sample-Assets",
+      "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CesiumMan",
+      "scenes": ["Scenes/CharacterTest.scene.json"],
+      "dest": "Content/Assets/Models/CesiumMan",
+      "files": [
+        { "path": "CesiumMan.gltf", "sha256": "bbb66a129c906e015620197b683edbc6e7a27510169ffa5adec2114046f14919", "sizeBytes": 51950 },
+        { "path": "CesiumMan_data.bin", "sha256": "2115d3c8df0519cea62f7def76d66d2346c5ac2216319859d3c79e3784dafd3f", "sizeBytes": 252664 },
+        { "path": "CesiumMan_img0.jpg", "sha256": "35d278c7b7b0b9e22881b2c435e41ce8659f230c776ef8780b4a5087abbefaa1", "sizeBytes": 157013 }
+      ]
     }
   ]
 }

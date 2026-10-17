@@ -34,6 +34,7 @@ SceneLoadResult World::loadScene(const std::string& contentPath, assets::AssetRe
         m_watched.push_back({file, modificationTime(file)});
     }
     ++m_sceneRevision;
+    m_animation.clear();
     TransformSystem::update(m_registry); // world matrices exist from the very first frame
     return result;
 }
@@ -60,8 +61,9 @@ bool World::reloadIfChanged(assets::AssetRegistry& assets, SceneLoadResult& resu
     return true;
 }
 
-void World::update() {
+void World::update(float deltaSeconds, const assets::AssetRegistry& assets) {
     TransformSystem::update(m_registry);
+    m_animation.update(m_registry, assets, deltaSeconds);
 }
 
 } // namespace ghost::world

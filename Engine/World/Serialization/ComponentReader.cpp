@@ -2,6 +2,7 @@
 #include "World/Serialization/ComponentReader.h"
 
 #include "Core/JsonReader.h"
+#include "World/Components/Animator.h"
 #include "World/Components/Camera.h"
 #include "World/Components/DirectionalLight.h"
 #include "World/Components/MaterialOverride.h"
@@ -22,8 +23,8 @@ namespace ghost::world {
 
 namespace {
 
-constexpr std::array<std::string_view, 7> kKnownComponents = {"MeshRenderer", "MaterialOverride", "DirectionalLight", "PointLight",
-                                                              "SpotLight", "Camera", "Transform"};
+constexpr std::array<std::string_view, 8> kKnownComponents = {"MeshRenderer", "MaterialOverride", "DirectionalLight", "PointLight",
+                                                              "SpotLight", "Camera", "Transform", "Animator"};
 constexpr std::array<std::string_view, 4> kSandboxComponents = {"RigidBody", "Collider", "Grabbable", "Frozen"};
 
 void readMeshRenderer(const core::JsonReader& data, entt::registry& registry, entt::entity entity, assets::AssetRegistry& assets,
@@ -95,6 +96,18 @@ void readSpotLight(const core::JsonReader& data, entt::registry& registry, entt:
     registry.emplace_or_replace<SpotLight>(entity, light);
 }
 
+// The clip is checked against the model later (AnimationSystem), once the MeshRenderer's model is known to have loaded.
+void readAnimator(const core::JsonReader& data, entt::registry& registry, entt::entity entity) {
+    data.warnUnknownKeys({"clip", "speed", "loop", "playing", "startTime"});
+    Animator animator;
+    animator.clip = data.string("clip");
+    animator.speed = data.number("speed", animator.speed);
+    animator.loop = data.boolean("loop", animator.loop);
+    animator.playing = data.boolean("playing", animator.playing);
+    animator.time = data.number("startTime", 0.0f);
+    registry.emplace_or_replace<Animator>(entity, std::move(animator));
+}
+
 void readCamera(const core::JsonReader& data, entt::registry& registry, entt::entity entity) {
     data.warnUnknownKeys({"fovYDeg", "nearPlane"});
     Camera camera;
@@ -150,6 +163,8 @@ void ComponentReader::apply(const std::string& name, const core::JsonReader& dat
         readSpotLight(data, registry, entity);
     } else if (name == "Camera") {
         readCamera(data, registry, entity);
+    } else if (name == "Animator") {
+        readAnimator(data, registry, entity);
     } else if (std::find(kSandboxComponents.begin(), kSandboxComponents.end(), name) != kSandboxComponents.end()) {
         data.warning("arrives with the sandbox (milestone M0b); ignored for now");
     } else {

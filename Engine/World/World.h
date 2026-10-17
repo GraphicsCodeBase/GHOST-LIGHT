@@ -3,6 +3,7 @@
 
 #include "World/SceneSettings.h"
 #include "World/Serialization/SceneLoader.h"
+#include "World/Systems/AnimationSystem.h"
 
 #include <chrono>
 #include <cstdint>
@@ -27,8 +28,9 @@ public:
     // Reloads the current scene when it or one of its prefab files changed on disk (checked at most twice a second).
     bool reloadIfChanged(assets::AssetRegistry& assets, SceneLoadResult& result);
 
-    // Runs the per-frame systems (transforms for now; lights, physics, sandbox later).
-    void update();
+    // Runs the per-frame systems: transforms, then animation (physics and sandbox later).
+    void update(float deltaSeconds, const assets::AssetRegistry& assets);
+    const AnimationSystem& animation() const { return m_animation; }
 
     const std::string& currentScene() const { return m_settings.file; }
     // Increments with every successful (re)load: the GPU scene uses it to rebuild.
@@ -42,6 +44,7 @@ private:
 
     entt::registry m_registry;
     SceneSettings m_settings;
+    AnimationSystem m_animation;
     std::vector<WatchedFile> m_watched;
     std::chrono::steady_clock::time_point m_lastCheck{};
     uint64_t m_sceneRevision = 0;

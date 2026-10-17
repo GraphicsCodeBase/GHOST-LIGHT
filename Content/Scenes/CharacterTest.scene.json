@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "name": "Character Test",
+  "environment": { "hdri": "Assets/HDRI/kloofendal_48d_partly_cloudy_2k.hdr", "intensity": 5000.0 },
+  "exposure": { "ev100": 14.0 },
+  "player": { "mode": "Fly", "start": "Character" },
+  "cameraBookmarks": [
+    { "name": "Character", "position": [-6.5, 1.2, -0.3], "yawPitch": [90, -5] },
+    { "name": "Close", "position": [-5.0, 1.0, 0.4], "yawPitch": [70, -8] }
+  ],
+  "entities": [
+    { "name": "Sponza", "prefab": "Prefabs/Static/Sponza.prefab.json" },
+    {
+      "name": "Sun",
+      "components": {
+        "DirectionalLight": { "direction": [-0.25, -1.0, 0.18], "illuminance": 100000, "color": [1.0, 0.96, 0.9], "angularSizeDeg": 0.53 }
+      }
+    },
+    {
+      "name": "CesiumMan",
+      "prefab": "Prefabs/Characters/CesiumMan.prefab.json",
+      "transform": { "position": [-4.0, 0.0, -0.3], "rotationEuler": [0, -90, 0] }
+    }
+  ],
+  "techniques": {}
+}

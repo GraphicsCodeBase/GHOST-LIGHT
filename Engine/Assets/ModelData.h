@@ -1,13 +1,16 @@
 // A model on the CPU: one vertex/index array, primitives (one material each), meshes (groups of primitives, one BLAS
-// each on the GPU), nodes (mesh placements inside the model), materials and images.
+// each on the GPU), nodes (mesh placements inside the model), materials and images. Skinned models also carry the
+// full node hierarchy, their skins, per-vertex joint weights and animation clips.
 #pragma once
 
+#include "Assets/AnimationData.h"
 #include "Assets/ImageData.h"
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include <glm/gtc/quaternion.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -64,7 +67,36 @@ struct NodeData {
     std::string name;
     uint32_t mesh = 0;               // into ModelData::meshes
     glm::mat4 transform{1.0f};       // node -> model space
+    int32_t hierarchyNode = -1;      // into ModelData::hierarchy
+    int32_t skin = -1;               // into ModelData::skins; -1 = rigid mesh
 };
+
+// One node of the glTF node tree (every node, joints included), with its transform relative to its parent.
+// A node given as a matrix in the file is decomposed into translation / rotation / scale on import.
+struct HierarchyNodeData {
+    std::string name;
+    int32_t parent = -1;                       // into ModelData::hierarchy; -1 = a root of the model
+    glm::vec3 translation{0.0f};
+    glm::quat rotation{1.0f, 0.0f, 0.0f, 0.0f};
+    glm::vec3 scale{1.0f};
+    glm::mat4 restGlobal{1.0f};                // node -> model space at rest, computed by cgltf (a test reference)
+};
+
+// A glTF skin: the joints a mesh is bound to and, per joint, the matrix that takes a vertex from the mesh's bind
+// space into that joint's local space.
+struct SkinData {
+    std::string name;
+    std::vector<uint32_t> joints;               // into ModelData::hierarchy; SkinVertex::joints index this list
+    std::vector<glm::mat4> inverseBindMatrices; // parallel to joints
+};
+
+// Up to four joint influences per vertex (glTF JOINTS_0 / WEIGHTS_0). Kept apart from Vertex so its 48-byte shader
+// layout never changes; parallel to ModelData::vertices when the model has skins, empty otherwise.
+struct SkinVertex {
+    glm::uvec4 joints{0u};   // into the skin's joint list
+    glm::vec4 weights{0.0f}; // sum to 1 for skinned vertices
+};
+static_assert(sizeof(SkinVertex) == 32, "SkinVertex must stay 32 bytes (shader layout)");
 
 struct ModelData {
     std::string name;
@@ -76,6 +108,10 @@ struct ModelData {
     std::vector<NodeData> nodes;
     std::vector<MaterialData> materials;
     std::vector<ImageData> images;
+    std::vector<HierarchyNodeData> hierarchy; // every node of the file (filled for glTF models)
+    std::vector<SkinData> skins;
+    std::vector<SkinVertex> skinVertices;     // parallel to vertices, or empty
+    std::vector<AnimationData> animations;
     glm::vec3 boundsMin{0.0f};
     glm::vec3 boundsMax{0.0f};
 };

@@ -2,6 +2,7 @@
 add_subdirectory(Core)
 add_subdirectory(Platform)
 add_subdirectory(Assets)
+add_subdirectory(Animation)
 add_subdirectory(Graphics/Vulkan)
 add_subdirectory(Graphics/ShaderCompiler)
 add_subdirectory(Graphics/RenderGraph)
