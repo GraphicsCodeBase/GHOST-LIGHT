@@ -133,4 +133,14 @@ tags: [roadmap]
 ## Optional extras
 Caustics · volumes · RT decals · thin lens (see [[08 RTG Technique Catalog]])
 
+## Feature track: playable character (optional, branch `character`)
+Separate from the milestones above. Plan and kickoff prompt: [[19 Character Pipeline Prompt]]; branch and merge rules in
+[[12 Decisions Log]] (2026-10-17).
+- [ ] Phase R: research the Eve (Stellar Blade) pipeline, pick the Tier 1 scope
+- [ ] Skinning + BLAS refit (merge stage 1)
+- [ ] Verlet hair on spring-bone chains (merge stage 2)
+- [ ] Jiggle bones → soft skin → normal recompute (merge stage 3)
+- [ ] Skin shading: dual-lobe GGX, transmission → RT SSS + denoise (merge stage 4)
+- [ ] Release tag `v1.0-character`
+
 See also: [[08 RTG Technique Catalog]], [[11 Portfolio Plan]]

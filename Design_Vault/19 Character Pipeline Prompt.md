@@ -8,12 +8,12 @@ tags: [prompt, kickoff, character]
 > Kickoff prompt for the **"Solo + AI vs Studio"** character pipeline project. Open a new Claude Code session in the
 > repo root and paste the code block below. Drafted 2026-10-17 from a first prompt about Verlet hair + skin shading.
 
-> [!warning] Not decided yet (settle at the start of the session, then record in [[12 Decisions Log]])
-> - Does this live **inside GHOST LIGHT** as its own milestone (recommended), or as a separate project that only uses
->   GHOST LIGHT as the renderer? Either way it lifts the "skeletal animation / gameplay out of scope" fence in
->   [[02 Goals and Context]].
-> - How it interleaves with the agreed order M1 → M2 → M4 → M5 → M3 ([[07 Roadmap]]). Phase R needs no engine time;
->   character shading can reuse M1 shadows, M2 GGX and M5 denoising.
+> [!success] Decided 2026-10-17 (see [[12 Decisions Log]])
+> - An **optional feature track** in the same repo, separate from the RTG roadmap: branch **`character`**, code in
+>   `Engine/Animation/` and `Techniques/Character/`, its own `CharacterShowcase` scene. Listed in [[07 Roadmap]].
+> - Merged into `main` **in stages via pull requests**, each passing `run.bat test` with existing scenes unchanged and
+>   unfinished parts off by default. Finish = delete the branch, tag `v1.0-character`.
+> - Runs alongside M1 → M2 → M4 → M5 → M3; character shading can reuse M1 shadows, M2 GGX and M5 denoising.
 
 ```markdown
 # Project: "Solo + AI vs Studio" — a playable hero character pipeline
@@ -59,7 +59,7 @@ Skinning compute + BLAS refit → Verlet hair on spring-bone chains → jiggle b
 soft skin + normal recompute → dual-lobe GGX + transmission → RT SSS (Burley) + temporal denoise.
 
 ## Start
-Settle the two open decisions in the vault note with me first. Then do Phase R and present the
+Work on the `character` branch (decisions in the vault note are already made). Do Phase R and present the
 pipeline map. Then propose which stages are realistic for Tier 1, how they map onto GHOST LIGHT's
 roadmap, and a concrete first build step.
 ```

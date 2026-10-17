@@ -35,13 +35,13 @@ tags: [log, handoff]
 **Where we left off:**
 - Engine runs on the laptop. `Scripts/Dependencies.json` there holds the laptop build's hash (`e88ac8a7…`), **left uncommitted on purpose**: the rebuild isn't byte-identical to the dev machine's zip
 **Next steps:**
-1. New session with [[19 Character Pipeline Prompt]]: settle its two open decisions, then Phase R (research)
-2. M1 / M0b as agreed
+1. New session on branch `character` with [[19 Character Pipeline Prompt]]: Phase R (research)
+2. M1 / M0b as agreed; user reviews and merges `m0a-core` → `main`
 **Open issues / blockers:**
 - User to-do (still): upload one validation-layer zip as the GitHub release and make `Dependencies.json` match it
 - `Downloads.ps1` reports a 404 as "check your internet connection"; it should say the release asset is missing
 **Decisions made:**
-- None yet. The character project's scope change is pending (see [[19 Character Pipeline Prompt]])
+- Character pipeline = optional feature track on branch `character` (from `m0a-core`, since `main` doesn't have the engine yet), merged into `main` in stages via PRs
 
 ## 2026-10-10 (day 2): M0a complete: steps 5–9 (world, GPU scene, ray tracing, technique API, debug tools)
 **Milestone:** M0a ✅   **Branch:** m0a-core (pushed)   **Last commit:** see `git log` (docs: M0a complete)
