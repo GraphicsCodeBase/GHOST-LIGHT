@@ -43,6 +43,8 @@ A C++/Vulkan ray tracing sandbox for implementing techniques from **Ray Tracing 
 | 18 | [[18 Session Log]] | **Where we left off.** Updated at the end of every session |
 | 19 | [[19 Character Pipeline Prompt]] | Kickoff prompt for the "Solo + AI vs Studio" playable character project |
 | 20 | [[20 Eve Pipeline Research]] | How Eve (Stellar Blade) was made, stage by stage, and the solo + AI equivalent |
+| 21 | [[21 Character Implementation Plan]] | Work split, engine changes and stage checklists for the character track |
+| — | [[Study/Character/00 Study Index]] | Concept notes from the study session, read before each stage's code |
 
 ## 🧩 Templates
 - [[Technique Writeup]]: one per finished technique
